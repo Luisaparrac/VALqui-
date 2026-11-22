@@ -1,0 +1,2587 @@
+{
+  "info": {
+    "name": "VAlqui",
+    "description": "Pruebas del backend VAlqui. Correr en orden (Runner o Newman) sobre una base de datos vacía después de la carga inicial.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "function fecha(dias) {",
+          "  const d = new Date(Date.now() + dias * 24 * 60 * 60 * 1000);",
+          "  d.setUTCMinutes(0, 0, 0);",
+          "  return d.toISOString().slice(0, 19);",
+          "}",
+          "pm.collectionVariables.set(\"recogida1\", fecha(3));",
+          "pm.collectionVariables.set(\"devolucion1\", fecha(5));",
+          "pm.collectionVariables.set(\"recogidaCruce\", fecha(4));",
+          "pm.collectionVariables.set(\"devolucionCruce\", fecha(6));",
+          "pm.collectionVariables.set(\"recogida2\", fecha(10));",
+          "pm.collectionVariables.set(\"devolucion2\", fecha(12));",
+          "pm.collectionVariables.set(\"recogida3\", fecha(20));",
+          "pm.collectionVariables.set(\"devolucion3\", fecha(22));",
+          "const nac = new Date(); nac.setFullYear(nac.getFullYear() - 16);",
+          "pm.collectionVariables.set(\"fechaNacimientoMenor\", nac.toISOString().slice(0, 10));"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "tokenAdmin",
+      "value": ""
+    },
+    {
+      "key": "tokenCompania",
+      "value": ""
+    },
+    {
+      "key": "tokenRentaCol",
+      "value": ""
+    },
+    {
+      "key": "tokenCliente",
+      "value": ""
+    },
+    {
+      "key": "tokenClienteMenor",
+      "value": ""
+    },
+    {
+      "key": "tokenAgente",
+      "value": ""
+    },
+    {
+      "key": "clienteId",
+      "value": ""
+    },
+    {
+      "key": "codigoReserva",
+      "value": ""
+    },
+    {
+      "key": "codigoReserva2",
+      "value": ""
+    },
+    {
+      "key": "codigoReserva3",
+      "value": ""
+    },
+    {
+      "key": "contrasenaTemporal",
+      "value": ""
+    },
+    {
+      "key": "sucursalAutoAndesId",
+      "value": ""
+    },
+    {
+      "key": "coberturaAutoAndesId",
+      "value": ""
+    },
+    {
+      "key": "coberturaRentaColId",
+      "value": ""
+    },
+    {
+      "key": "sucursalNorteId",
+      "value": "suc-rentacol-norte"
+    },
+    {
+      "key": "sucursalSurId",
+      "value": "suc-rentacol-sur"
+    },
+    {
+      "key": "sufijo",
+      "value": ""
+    },
+    {
+      "key": "nitAutoAndes",
+      "value": ""
+    },
+    {
+      "key": "correoAutoAndes",
+      "value": ""
+    },
+    {
+      "key": "placaAutoAndes",
+      "value": ""
+    },
+    {
+      "key": "placaRentaCol",
+      "value": ""
+    },
+    {
+      "key": "correoCliente",
+      "value": ""
+    },
+    {
+      "key": "correoMenor",
+      "value": ""
+    },
+    {
+      "key": "recogida1",
+      "value": ""
+    },
+    {
+      "key": "devolucion1",
+      "value": ""
+    },
+    {
+      "key": "recogidaCruce",
+      "value": ""
+    },
+    {
+      "key": "devolucionCruce",
+      "value": ""
+    },
+    {
+      "key": "recogida2",
+      "value": ""
+    },
+    {
+      "key": "devolucion2",
+      "value": ""
+    },
+    {
+      "key": "recogida3",
+      "value": ""
+    },
+    {
+      "key": "devolucion3",
+      "value": ""
+    },
+    {
+      "key": "fechaNacimientoMenor",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Sesión (HU-18)",
+      "item": [
+        {
+          "name": "1.1 Login del administrador",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const s = String(Date.now()).slice(-6);",
+                  "pm.collectionVariables.set(\"sufijo\", s);",
+                  "pm.collectionVariables.set(\"nitAutoAndes\", \"901\" + s + \"-1\");",
+                  "pm.collectionVariables.set(\"correoAutoAndes\", \"autoandes\" + s + \"@valqui.com\");",
+                  "pm.collectionVariables.set(\"placaAutoAndes\", \"AND\" + s);",
+                  "pm.collectionVariables.set(\"placaRentaCol\", \"RCL\" + s);",
+                  "pm.collectionVariables.set(\"correoCliente\", \"cliente\" + s + \"@correo.com\");",
+                  "pm.collectionVariables.set(\"correoMenor\", \"menor\" + s + \"@correo.com\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve token, tipo ADMIN e id\", () => { pm.expect(r.token).to.be.a(\"string\").and.not.empty; pm.expect(r.tipo).to.eql(\"ADMIN\"); pm.expect(r.id).to.be.a(\"string\"); });",
+                  "pm.collectionVariables.set(\"tokenAdmin\", r.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"admin@valqui.com\",\n  \"contrasena\": \"Admin123*\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "1.2 Login con contraseña incorrecta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(401); });",
+                  "pm.test(\"Mensaje: Correo o contraseña incorrectos\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Correo o contraseña incorrectos\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"admin@valqui.com\",\n  \"contrasena\": \"Incorrecta1*\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Compañías (HU-15, HU-09, HU-12, HU-13)",
+      "item": [
+        {
+          "name": "2.1 Registrar AutoAndes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve la contraseña temporal\", () => { pm.expect(r.contrasenaTemporal).to.be.a(\"string\").and.not.empty; pm.expect(r.nit).to.eql(pm.collectionVariables.get(\"nitAutoAndes\")); });",
+                  "pm.collectionVariables.set(\"contrasenaTemporal\", r.contrasenaTemporal);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companias"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nit\": \"{{nitAutoAndes}}\",\n  \"nombre\": \"AutoAndes\",\n  \"ciudadesOperacion\": [\n    \"Cali\",\n    \"Bogotá\"\n  ],\n  \"correoAcceso\": \"{{correoAutoAndes}}\",\n  \"nombreCompleto\": \"Carolina Ríos\",\n  \"cargo\": \"Gerente comercial\",\n  \"telefono\": \"3001234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2.2 Registrar con NIT duplicado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(409); });",
+                  "pm.test(\"Mensaje: Ya existe una compañía registrada con ese NIT\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Ya existe una compañía registrada con ese NIT\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companias"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nit\": \"{{nitAutoAndes}}\",\n  \"nombre\": \"AutoAndes Bis\",\n  \"ciudadesOperacion\": [\n    \"Cali\"\n  ],\n  \"correoAcceso\": \"otro{{sufijo}}@valqui.com\",\n  \"nombreCompleto\": \"Otra Persona\",\n  \"cargo\": \"Gerente\",\n  \"telefono\": \"3000000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2.3 Login de la compañía",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve token, tipo COMPANIA e id\", () => { pm.expect(r.token).to.be.a(\"string\").and.not.empty; pm.expect(r.tipo).to.eql(\"COMPANIA\"); pm.expect(r.id).to.be.a(\"string\"); });",
+                  "pm.collectionVariables.set(\"tokenCompania\", r.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoAutoAndes}}\",\n  \"contrasena\": \"{{contrasenaTemporal}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2.4 Registrar sucursal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"La sucursal tiene id y ciudad Cali\", () => { pm.expect(r.id).to.be.a(\"string\"); pm.expect(r.ciudad).to.eql(\"Cali\"); });",
+                  "pm.collectionVariables.set(\"sucursalAutoAndesId\", r.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCompania}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companias/{{nitAutoAndes}}/sucursales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companias",
+                "{{nitAutoAndes}}",
+                "sucursales"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sucursal Centro Cali\",\n  \"ciudad\": \"Cali\",\n  \"direccion\": \"Avenida 6N # 23-50\",\n  \"coordenadas\": \"3.4516,-76.5320\",\n  \"horarioAtencion\": \"Lunes a sábado 7:00 - 19:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2.5 Sucursal en ciudad donde no opera",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(400); });",
+                  "pm.test(\"Mensaje: La compañía no opera en esa ciudad\", () => pm.expect(pm.response.json().mensaje).to.eql(\"La compañía no opera en esa ciudad\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCompania}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companias/{{nitAutoAndes}}/sucursales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companias",
+                "{{nitAutoAndes}}",
+                "sucursales"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sucursal Barranquilla\",\n  \"ciudad\": \"Barranquilla\",\n  \"direccion\": \"Calle 72 # 50-10\",\n  \"horarioAtencion\": \"Lunes a viernes 8:00 - 18:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2.6 Configurar política",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Política guardada\", () => { pm.expect(r.horasCancelacionGratuita).to.eql(48); pm.expect(r.penalizacionCancelacion).to.eql(80000); pm.expect(r.valorDeposito).to.eql(500000); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCompania}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companias/{{nitAutoAndes}}/politica",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companias",
+                "{{nitAutoAndes}}",
+                "politica"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"horasCancelacionGratuita\": 48,\n  \"penalizacionCancelacion\": 80000,\n  \"valorDeposito\": 500000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2.7 Agregar cobertura",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"La cobertura tiene id y costo\", () => { pm.expect(r.id).to.be.a(\"string\"); pm.expect(r.costo).to.eql(45000); });",
+                  "pm.collectionVariables.set(\"coberturaAutoAndesId\", r.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCompania}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companias/{{nitAutoAndes}}/coberturas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companias",
+                "{{nitAutoAndes}}",
+                "coberturas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Seguro todo riesgo\",\n  \"costo\": 45000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Vehículos (HU-10, HU-14, HU-11)",
+      "item": [
+        {
+          "name": "3.1 Registrar vehículo (AutoAndes)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Queda DISPONIBLE en Cali\", () => { pm.expect(r.estado).to.eql(\"DISPONIBLE\"); pm.expect(r.placa).to.eql(pm.collectionVariables.get(\"placaAutoAndes\")); pm.expect(r.sucursalCiudad).to.eql(\"Cali\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCompania}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehiculos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehiculos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"marca\": \"Toyota\",\n  \"modelo\": \"Corolla\",\n  \"categoria\": \"SEDAN\",\n  \"anio\": 2024,\n  \"transmision\": \"AUTOMATICA\",\n  \"capacidadPasajeros\": 5,\n  \"tarifaDiaria\": 150000,\n  \"kilometrajeIncluido\": 200,\n  \"franquiciaDanos\": 2000000,\n  \"sucursalId\": \"{{sucursalAutoAndesId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "3.2 Registrar con placa duplicada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(409); });",
+                  "pm.test(\"Mensaje: Ya existe un vehículo registrado con esa placa\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Ya existe un vehículo registrado con esa placa\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCompania}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehiculos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehiculos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"marca\": \"Toyota\",\n  \"modelo\": \"Corolla\",\n  \"categoria\": \"SEDAN\",\n  \"anio\": 2024,\n  \"transmision\": \"AUTOMATICA\",\n  \"capacidadPasajeros\": 5,\n  \"tarifaDiaria\": 150000,\n  \"kilometrajeIncluido\": 200,\n  \"franquiciaDanos\": 2000000,\n  \"sucursalId\": \"{{sucursalAutoAndesId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "3.3 Cambiar estado a EN_MANTENIMIENTO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Estado EN_MANTENIMIENTO\", () => pm.expect(pm.response.json().estado).to.eql(\"EN_MANTENIMIENTO\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCompania}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehiculos/{{placaAutoAndes}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehiculos",
+                "{{placaAutoAndes}}",
+                "estado"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EN_MANTENIMIENTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "3.4 Volver a DISPONIBLE",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Estado DISPONIBLE\", () => pm.expect(pm.response.json().estado).to.eql(\"DISPONIBLE\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCompania}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehiculos/{{placaAutoAndes}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehiculos",
+                "{{placaAutoAndes}}",
+                "estado"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"DISPONIBLE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "3.5 Intentar poner RESERVADO a mano",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCompania}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehiculos/{{placaAutoAndes}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehiculos",
+                "{{placaAutoAndes}}",
+                "estado"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RESERVADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "3.6 Login de RentaCol (compañía semilla)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve token, tipo COMPANIA e id\", () => { pm.expect(r.token).to.be.a(\"string\").and.not.empty; pm.expect(r.tipo).to.eql(\"COMPANIA\"); pm.expect(r.id).to.be.a(\"string\"); });",
+                  "pm.collectionVariables.set(\"tokenRentaCol\", r.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"rentacol@valqui.com\",\n  \"contrasena\": \"Renta123*\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "3.7 Registrar vehículo de RentaCol (Sucursal Norte)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Queda DISPONIBLE en Sucursal Norte\", () => { pm.expect(r.estado).to.eql(\"DISPONIBLE\"); pm.expect(r.sucursalId).to.eql(pm.collectionVariables.get(\"sucursalNorteId\")); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenRentaCol}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehiculos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehiculos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"{{placaRentaCol}}\",\n  \"marca\": \"Mazda\",\n  \"modelo\": \"CX-30\",\n  \"categoria\": \"SUV\",\n  \"anio\": 2024,\n  \"transmision\": \"AUTOMATICA\",\n  \"capacidadPasajeros\": 5,\n  \"tarifaDiaria\": 180000,\n  \"kilometrajeIncluido\": null,\n  \"franquiciaDanos\": 2000000,\n  \"sucursalId\": \"{{sucursalNorteId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "3.8 Agregar cobertura de RentaCol",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Cobertura creada\", () => pm.expect(r.id).to.be.a(\"string\"));",
+                  "pm.collectionVariables.set(\"coberturaRentaColId\", r.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenRentaCol}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companias/900123456-7/coberturas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companias",
+                "900123456-7",
+                "coberturas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Asistencia en carretera\",\n  \"costo\": 30000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Cliente (HU-01, R03)",
+      "item": [
+        {
+          "name": "4.1 Registrar cliente mayor de edad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Cliente creado sin exponer la contraseña\", () => { pm.expect(r.id).to.be.a(\"string\"); pm.expect(r.tipo).to.eql(\"CLIENTE\"); pm.expect(r).to.not.have.property(\"contrasena\"); });",
+                  "pm.collectionVariables.set(\"clienteId\", r.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "clientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Andrés Gómez\",\n  \"correo\": \"{{correoCliente}}\",\n  \"contrasena\": \"Cliente123*\",\n  \"fechaNacimiento\": \"1995-04-12\",\n  \"numeroContacto\": \"3105556677\",\n  \"paisResidencia\": \"Colombia\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "4.2 Registrar con correo duplicado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(409); });",
+                  "pm.test(\"Mensaje: Ya existe un usuario registrado con ese correo\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Ya existe un usuario registrado con ese correo\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "clientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Otro Cliente\",\n  \"correo\": \"{{correoCliente}}\",\n  \"contrasena\": \"Cliente123*\",\n  \"fechaNacimiento\": \"1990-01-01\",\n  \"numeroContacto\": \"3100000000\",\n  \"paisResidencia\": \"Colombia\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "4.3 Login del cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve token, tipo CLIENTE e id\", () => { pm.expect(r.token).to.be.a(\"string\").and.not.empty; pm.expect(r.tipo).to.eql(\"CLIENTE\"); pm.expect(r.id).to.be.a(\"string\"); });",
+                  "pm.collectionVariables.set(\"tokenCliente\", r.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoCliente}}\",\n  \"contrasena\": \"Cliente123*\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "4.4 Registrar tarjeta VISA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Guarda marca y últimos dígitos, sin token ni número completo\", () => { pm.expect(r.marca).to.eql(\"VISA\"); pm.expect(r.ultimosDigitos).to.eql(\"4242\"); pm.expect(r).to.not.have.property(\"token\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/clientes/{{clienteId}}/metodos-pago",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clientes",
+                "{{clienteId}}",
+                "metodos-pago"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"marca\": \"VISA\",\n  \"tipo\": \"CREDITO\",\n  \"ultimosDigitos\": \"4242\",\n  \"token\": \"tok_visa_4242\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "4.5 Registrar marca inválida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(400); });",
+                  "pm.test(\"Mensaje: Marca de tarjeta no aceptada\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Marca de tarjeta no aceptada\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/clientes/{{clienteId}}/metodos-pago",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clientes",
+                "{{clienteId}}",
+                "metodos-pago"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"marca\": \"DINERS\",\n  \"tipo\": \"CREDITO\",\n  \"ultimosDigitos\": \"1111\",\n  \"token\": \"tok_diners_1111\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "4.6a Registrar cliente menor de edad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Cliente menor creado\", () => pm.expect(pm.response.json().tipo).to.eql(\"CLIENTE\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "clientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Sofía Gómez\",\n  \"correo\": \"{{correoMenor}}\",\n  \"contrasena\": \"Menor123*\",\n  \"fechaNacimiento\": \"{{fechaNacimientoMenor}}\",\n  \"numeroContacto\": \"3108889900\",\n  \"paisResidencia\": \"Colombia\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "4.6b Login del cliente menor de edad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve token, tipo CLIENTE e id\", () => { pm.expect(r.token).to.be.a(\"string\").and.not.empty; pm.expect(r.tipo).to.eql(\"CLIENTE\"); pm.expect(r.id).to.be.a(\"string\"); });",
+                  "pm.collectionVariables.set(\"tokenClienteMenor\", r.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoMenor}}\",\n  \"contrasena\": \"Menor123*\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Búsqueda y detalle (HU-02, HU-03)",
+      "item": [
+        {
+          "name": "5.1 Búsqueda con resultados",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"La lista contiene la placa de AutoAndes\", () => pm.expect(r.vehiculos.map(v => v.placa)).to.include(pm.collectionVariables.get(\"placaAutoAndes\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehiculos/disponibles?ciudad=Cali&desde={{recogida1}}&hasta={{devolucion1}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehiculos",
+                "disponibles"
+              ],
+              "query": [
+                {
+                  "key": "ciudad",
+                  "value": "Cali"
+                },
+                {
+                  "key": "desde",
+                  "value": "{{recogida1}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{devolucion1}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5.2 Búsqueda sin ciudad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehiculos/disponibles?desde={{recogida1}}&hasta={{devolucion1}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehiculos",
+                "disponibles"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "{{recogida1}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{devolucion1}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5.3 Búsqueda sin resultados",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Lista vacía\", () => pm.expect(r.vehiculos).to.eql([]));",
+                  "pm.test(\"Mensaje: No se encontraron vehículos disponibles con los filtros seleccionados\", () => pm.expect(pm.response.json().mensaje).to.eql(\"No se encontraron vehículos disponibles con los filtros seleccionados\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehiculos/disponibles?ciudad=Cartagena&desde={{recogida1}}&hasta={{devolucion1}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehiculos",
+                "disponibles"
+              ],
+              "query": [
+                {
+                  "key": "ciudad",
+                  "value": "Cartagena"
+                },
+                {
+                  "key": "desde",
+                  "value": "{{recogida1}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{devolucion1}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5.4 Detalle del vehículo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Incluye depósito, franquicia, kilometraje y política\", () => { pm.expect(r.valorDeposito).to.eql(500000); pm.expect(r.franquiciaDanos).to.eql(2000000); pm.expect(r.kilometrajeIncluido).to.eql(200); pm.expect(r.politicaCancelacion.horasCancelacionGratuita).to.eql(48); pm.expect(r.politicaCancelacion.penalizacionCancelacion).to.eql(80000); });",
+                  "pm.test(\"Incluye las coberturas de la compañía\", () => pm.expect(r.coberturas.map(c => c.id)).to.include(pm.collectionVariables.get(\"coberturaAutoAndesId\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehiculos/{{placaAutoAndes}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehiculos",
+                "{{placaAutoAndes}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Reservas (HU-04 a HU-08)",
+      "item": [
+        {
+          "name": "6.1 Crear reserva con cliente menor de edad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(403); });",
+                  "pm.test(\"Mensaje: Debes ser mayor de edad para reservar\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Debes ser mayor de edad para reservar\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenClienteMenor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"{{placaRentaCol}}\",\n  \"fechaHoraRecogida\": \"{{recogida1}}\",\n  \"fechaHoraDevolucion\": \"{{devolucion1}}\",\n  \"sucursalRecogidaId\": \"{{sucursalNorteId}}\",\n  \"sucursalDevolucionId\": \"{{sucursalNorteId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "6.2 Crear reserva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Reserva PENDIENTE con código RES-XXXXXX\", () => { pm.expect(r.estado).to.eql(\"PENDIENTE\"); pm.expect(r.codigo).to.match(/^RES-[A-Z0-9]{6}$/); });",
+                  "pm.test(\"Copia las condiciones del vehículo y la compañía\", () => { pm.expect(r.tarifaDiaria).to.eql(180000); pm.expect(r.valorDeposito).to.eql(300000); pm.expect(r.total).to.eql(360000); });",
+                  "pm.collectionVariables.set(\"codigoReserva\", r.codigo);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"{{placaRentaCol}}\",\n  \"fechaHoraRecogida\": \"{{recogida1}}\",\n  \"fechaHoraDevolucion\": \"{{devolucion1}}\",\n  \"sucursalRecogidaId\": \"{{sucursalNorteId}}\",\n  \"sucursalDevolucionId\": \"{{sucursalNorteId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "6.3 Crear reserva que se cruza",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(409); });",
+                  "pm.test(\"Mensaje: El vehículo no está disponible en esas fechas\", () => pm.expect(pm.response.json().mensaje).to.eql(\"El vehículo no está disponible en esas fechas\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"{{placaRentaCol}}\",\n  \"fechaHoraRecogida\": \"{{recogidaCruce}}\",\n  \"fechaHoraDevolucion\": \"{{devolucionCruce}}\",\n  \"sucursalRecogidaId\": \"{{sucursalNorteId}}\",\n  \"sucursalDevolucionId\": \"{{sucursalSurId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "6.4 Agregar cobertura",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"La cobertura queda incluida y suma al total\", () => { pm.expect(r.coberturaIds).to.include(pm.collectionVariables.get(\"coberturaRentaColId\")); pm.expect(r.total).to.eql(390000); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{codigoReserva}}/coberturas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{codigoReserva}}",
+                "coberturas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coberturaId\": \"{{coberturaRentaColId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "6.5 Confirmar sin método de pago válido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(400); });",
+                  "pm.test(\"Mensaje: Debes registrar un método de pago\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Debes registrar un método de pago\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{codigoReserva}}/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{codigoReserva}}",
+                "confirmar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ultimosDigitos\": \"0000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "6.6 Confirmar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Reserva CONFIRMADA y pagada con la tarjeta 4242\", () => { pm.expect(r.estado).to.eql(\"CONFIRMADA\"); pm.expect(r.metodoPago).to.eql(\"4242\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{codigoReserva}}/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{codigoReserva}}",
+                "confirmar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ultimosDigitos\": \"4242\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "6.7 Cambiar estado con reserva activa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(409); });",
+                  "pm.test(\"Mensaje: No se puede cambiar el estado de un vehículo con una reserva activa\", () => pm.expect(pm.response.json().mensaje).to.eql(\"No se puede cambiar el estado de un vehículo con una reserva activa\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenRentaCol}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehiculos/{{placaRentaCol}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehiculos",
+                "{{placaRentaCol}}",
+                "estado"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EN_MANTENIMIENTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "6.8 Reasignar con reserva activa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(409); });",
+                  "pm.test(\"Mensaje: No se puede reasignar un vehículo con una reserva activa\", () => pm.expect(pm.response.json().mensaje).to.eql(\"No se puede reasignar un vehículo con una reserva activa\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenRentaCol}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehiculos/{{placaRentaCol}}/sucursal",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehiculos",
+                "{{placaRentaCol}}",
+                "sucursal"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sucursalId\": \"{{sucursalSurId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "6.9a Crear segunda reserva en otras fechas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Reserva PENDIENTE\", () => pm.expect(r.estado).to.eql(\"PENDIENTE\"));",
+                  "pm.collectionVariables.set(\"codigoReserva2\", r.codigo);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"fechaHoraRecogida\": \"{{recogida2}}\",\n  \"fechaHoraDevolucion\": \"{{devolucion2}}\",\n  \"sucursalRecogidaId\": \"{{sucursalAutoAndesId}}\",\n  \"sucursalDevolucionId\": \"{{sucursalAutoAndesId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "6.9b Cancelar la segunda reserva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"CANCELADA con penalización 0\", () => { pm.expect(r.estado).to.eql(\"CANCELADA\"); pm.expect(r.penalizacion).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{codigoReserva2}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{codigoReserva2}}",
+                "cancelar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "6.10 Consultar historial",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"El historial contiene las dos reservas\", () => { const c = r.map(x => x.codigo); pm.expect(c).to.include(pm.collectionVariables.get(\"codigoReserva\")); pm.expect(c).to.include(pm.collectionVariables.get(\"codigoReserva2\")); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/cliente/{{clienteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "cliente",
+                "{{clienteId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Entrega y devolución (HU-16, HU-17)",
+      "item": [
+        {
+          "name": "7.1 Login del agente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve token, tipo AGENTE e id\", () => { pm.expect(r.token).to.be.a(\"string\").and.not.empty; pm.expect(r.tipo).to.eql(\"AGENTE\"); pm.expect(r.id).to.be.a(\"string\"); });",
+                  "pm.collectionVariables.set(\"tokenAgente\", r.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"agente.norte@valqui.com\",\n  \"contrasena\": \"Agente123*\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "7.2 Entrega con documentos no válidos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(400); });",
+                  "pm.test(\"Mensaje: Documentos no válidos, no se puede iniciar el alquiler\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Documentos no válidos, no se puede iniciar el alquiler\"));",
+                  "pm.sendRequest({ url: pm.collectionVariables.get(\"baseUrl\") + \"/api/reservas/cliente/\" + pm.collectionVariables.get(\"clienteId\"), method: \"GET\", header: { Authorization: \"Bearer \" + pm.collectionVariables.get(\"tokenCliente\") } }, (err, res) => {",
+                  "  pm.test(\"La reserva sigue CONFIRMADA\", () => { pm.expect(err).to.be.null; const r = res.json().find(x => x.codigo === pm.collectionVariables.get(\"codigoReserva\")); pm.expect(r.estado).to.eql(\"CONFIRMADA\"); });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAgente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/entregas/{{codigoReserva}}/entrega",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entregas",
+                "{{codigoReserva}}",
+                "entrega"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentosValidos\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "7.3 Entrega válida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Reserva EN_CURSO y vehículo RESERVADO\", () => { pm.expect(r.estadoReserva).to.eql(\"EN_CURSO\"); pm.expect(r.estadoVehiculo).to.eql(\"RESERVADO\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAgente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/entregas/{{codigoReserva}}/entrega",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entregas",
+                "{{codigoReserva}}",
+                "entrega"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentosValidos\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "7.4 Devolución con daño",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Reserva FINALIZADA y vehículo DISPONIBLE en la sucursal de devolución\", () => { pm.expect(r.estadoReserva).to.eql(\"FINALIZADA\"); pm.expect(r.estadoVehiculo).to.eql(\"DISPONIBLE\"); pm.expect(r.sucursalVehiculoId).to.eql(pm.collectionVariables.get(\"sucursalNorteId\")); });",
+                  "pm.test(\"Penalización por daño registrada\", () => { pm.expect(r.penalizacionDano.valor).to.eql(150000); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAgente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/entregas/{{codigoReserva}}/devolucion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entregas",
+                "{{codigoReserva}}",
+                "devolucion"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"valorDano\": 150000,\n  \"motivoDano\": \"Rayón en la puerta trasera derecha\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "7.5 Segunda penalización sobre la misma reserva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(409); });",
+                  "pm.test(\"Mensaje: La reserva ya tiene una penalización por daño registrada\", () => pm.expect(pm.response.json().mensaje).to.eql(\"La reserva ya tiene una penalización por daño registrada\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAgente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/entregas/{{codigoReserva}}/devolucion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entregas",
+                "{{codigoReserva}}",
+                "devolucion"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"valorDano\": 50000,\n  \"motivoDano\": \"Otro daño\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Pago rechazado",
+      "item": [
+        {
+          "name": "8.1 Registrar tarjeta con token tok_rechazado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Tarjeta registrada\", () => pm.expect(pm.response.json().ultimosDigitos).to.eql(\"0002\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/clientes/{{clienteId}}/metodos-pago",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clientes",
+                "{{clienteId}}",
+                "metodos-pago"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"marca\": \"MASTERCARD\",\n  \"tipo\": \"DEBITO\",\n  \"ultimosDigitos\": \"0002\",\n  \"token\": \"tok_rechazado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "8.2 Crear reserva nueva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Reserva PENDIENTE\", () => pm.expect(r.estado).to.eql(\"PENDIENTE\"));",
+                  "pm.collectionVariables.set(\"codigoReserva3\", r.codigo);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"fechaHoraRecogida\": \"{{recogida3}}\",\n  \"fechaHoraDevolucion\": \"{{devolucion3}}\",\n  \"sucursalRecogidaId\": \"{{sucursalAutoAndesId}}\",\n  \"sucursalDevolucionId\": \"{{sucursalAutoAndesId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "8.3 Confirmar con la tarjeta rechazada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(409); });",
+                  "pm.test(\"Mensaje: Pago rechazado\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Pago rechazado\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{codigoReserva3}}/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{codigoReserva3}}",
+                "confirmar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ultimosDigitos\": \"0002\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Seguridad",
+      "item": [
+        {
+          "name": "9.1 Request sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/cliente/{{clienteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "cliente",
+                "{{clienteId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "9.2 Cliente intentando registrar una compañía",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companias"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nit\": \"999999999-9\",\n  \"nombre\": \"Intrusa\",\n  \"ciudadesOperacion\": [\n    \"Cali\"\n  ],\n  \"correoAcceso\": \"intrusa@valqui.com\",\n  \"nombreCompleto\": \"Intruso\",\n  \"cargo\": \"N/A\",\n  \"telefono\": \"3000000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
