@@ -3,6 +3,7 @@ package com.valqui.negocio;
 import com.valqui.datos.UsuarioRepository;
 import com.valqui.modelo.Cliente;
 import com.valqui.modelo.MetodoPago;
+import com.valqui.modelo.NegocioException;
 import com.valqui.modelo.Usuario;
 import com.valqui.modelo.UsuarioCompania;
 import io.jsonwebtoken.Claims;
@@ -11,11 +12,13 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -23,8 +26,10 @@ import java.util.Date;
 @Service
 public class UsuarioService {
 
-    private static final String CARACTERES_CONTRASENA = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-    private static final SecureRandom ALEATORIO = new SecureRandom();
+    /** La firma de crearCuentaCompania no trae el nombre: CompaniaService lo deja en la petición. */
+    static final String ATRIBUTO_NOMBRE_COMPANIA = "nombreCompania";
+
+    private static final BCryptPasswordEncoder BCRYPT = new BCryptPasswordEncoder();
 
     private final UsuarioRepository usuarioRepository;
     private final SecretKey claveJwt;
@@ -38,14 +43,14 @@ public class UsuarioService {
         this.horasExpiracion = horasExpiracion;
     }
 
-    /** HU-01: registra un cliente nuevo. */
-    public Cliente registrarCliente(Cliente cliente, String contrasena) {
+    /** HU-01: registra un cliente nuevo y guarda su contraseña cifrada. */
+    public Cliente registrarCliente(Cliente cliente) {
         cliente.setCorreo(normalizarCorreo(cliente.getCorreo()));
         if (usuarioRepository.findByCorreo(cliente.getCorreo()).isPresent()) {
-            throw new NegocioException(409, "Ya existe un usuario registrado con ese correo");
+            throw new NegocioException(409, "El correo ya está registrado");
         }
-        cliente.setContrasena(contrasena);
-        return guardarNuevo(cliente);
+        cliente.setContrasena(BCRYPT.encode(cliente.getContrasena()));
+        return guardarNuevo(cliente, "El correo ya está registrado");
     }
 
     /** HU-18: valida las credenciales y devuelve el token de sesión. */
@@ -84,7 +89,7 @@ public class UsuarioService {
     /** R03: registra un método de pago embebido en el cliente. */
     public void agregarMetodoPago(String clienteId, MetodoPago metodoPago) {
         if (!metodoPago.esMarcaValida()) {
-            throw new NegocioException(400, "Marca de tarjeta no aceptada");
+            throw new NegocioException(400, "Franquicia de tarjeta no soportada");
         }
         Cliente cliente = buscarCliente(clienteId);
         boolean repetido = cliente.getMetodosPago().stream()
@@ -105,20 +110,23 @@ public class UsuarioService {
     }
 
     /**
-     * HU-15: crea la cuenta de acceso de la compañía con una contraseña temporal generada.
-     * Devuelve la contraseña temporal en claro (solo se muestra una vez).
+     * HU-15: crea la cuenta de acceso de la compañía. La contraseña inicial es el NIT (cifrado con BCrypt),
+     * el nombre es el de la compañía, y cargo y teléfono quedan vacíos.
      */
-    public String crearCuentaCompania(String nit, String correo, UsuarioCompania representante) {
+    public UsuarioCompania crearCuentaCompania(String nit, String correo) {
         String correoNormalizado = normalizarCorreo(correo);
         if (usuarioRepository.findByCorreo(correoNormalizado).isPresent()) {
             throw new NegocioException(409, "Ya existe un usuario registrado con ese correo");
         }
-        String contrasenaTemporal = generarContrasenaTemporal();
-        representante.setCompaniaNit(nit);
-        representante.setCorreo(correoNormalizado);
-        representante.setContrasena(contrasenaTemporal);
-        guardarNuevo(representante);
-        return contrasenaTemporal;
+        UsuarioCompania cuenta = new UsuarioCompania();
+        cuenta.setNombreCompleto((String) RequestContextHolder.currentRequestAttributes()
+                .getAttribute(ATRIBUTO_NOMBRE_COMPANIA, RequestAttributes.SCOPE_REQUEST));
+        cuenta.setCargo("");
+        cuenta.setTelefono("");
+        cuenta.setCompaniaNit(nit);
+        cuenta.setCorreo(correoNormalizado);
+        cuenta.setContrasena(BCRYPT.encode(nit));
+        return guardarNuevo(cuenta, "Ya existe un usuario registrado con ese correo");
     }
 
     private Cliente buscarCliente(String clienteId) {
@@ -128,23 +136,15 @@ public class UsuarioService {
                 .orElseThrow(() -> new NegocioException(404, "No se encontró el cliente"));
     }
 
-    private <T extends Usuario> T guardarNuevo(T usuario) {
+    private <T extends Usuario> T guardarNuevo(T usuario, String mensajeDuplicado) {
         try {
             return usuarioRepository.save(usuario);
         } catch (DuplicateKeyException e) {
-            throw new NegocioException(409, "Ya existe un usuario registrado con ese correo");
+            throw new NegocioException(409, mensajeDuplicado);
         }
     }
 
     private static String normalizarCorreo(String correo) {
         return correo == null ? null : correo.trim().toLowerCase();
-    }
-
-    private static String generarContrasenaTemporal() {
-        StringBuilder sb = new StringBuilder("Tmp-");
-        for (int i = 0; i < 10; i++) {
-            sb.append(CARACTERES_CONTRASENA.charAt(ALEATORIO.nextInt(CARACTERES_CONTRASENA.length())));
-        }
-        return sb.append('*').toString();
     }
 }

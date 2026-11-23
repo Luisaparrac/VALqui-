@@ -1,4 +1,4 @@
-package com.valqui.negocio;
+package com.valqui.modelo;
 
 /**
  * Excepción de negocio que lleva el código HTTP con el que se debe responder.

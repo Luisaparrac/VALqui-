@@ -1,8 +1,8 @@
 package com.valqui.presentacion;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.valqui.modelo.NegocioException;
 import com.valqui.modelo.Usuario;
-import com.valqui.negocio.NegocioException;
 import com.valqui.negocio.UsuarioService;
 import com.valqui.presentacion.dto.Respuestas;
 import jakarta.servlet.FilterChain;
@@ -11,6 +11,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -23,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 @Component
 public class FiltroSesion extends OncePerRequestFilter {
 
-    public static final String ATRIBUTO_USUARIO = "usuarioSesion";
+    public static final String ATRIBUTO_USUARIO = Usuario.ATRIBUTO_SESION;
 
     private final UsuarioService usuarioService;
     private final ObjectMapper objectMapper;
@@ -49,19 +51,21 @@ public class FiltroSesion extends OncePerRequestFilter {
             responderError(response, 401, "Debes iniciar sesión para acceder a este recurso");
             return;
         }
-        Usuario usuario = usuarioService.validarSesion(token);
+        Usuario usuario = (Usuario) request.getAttribute(ATRIBUTO_USUARIO);
         String rolRequerido = rolRequerido(metodo, ruta);
         if (rolRequerido != null && !rolRequerido.equals(usuario.getTipo())) {
             responderError(response, 403, "No tienes permiso para realizar esta acción");
             return;
         }
-        request.setAttribute(ATRIBUTO_USUARIO, usuario);
         chain.doFilter(request, response);
     }
 
+    /** Valida el token una sola vez y deja al usuario de la sesión en la petición. */
     public boolean validarPeticion(String token) {
         try {
-            usuarioService.validarSesion(token);
+            Usuario usuario = usuarioService.validarSesion(token);
+            RequestContextHolder.currentRequestAttributes()
+                    .setAttribute(ATRIBUTO_USUARIO, usuario, RequestAttributes.SCOPE_REQUEST);
             return true;
         } catch (NegocioException e) {
             return false;

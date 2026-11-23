@@ -23,6 +23,8 @@
           "pm.collectionVariables.set(\"devolucion2\", fecha(12));",
           "pm.collectionVariables.set(\"recogida3\", fecha(20));",
           "pm.collectionVariables.set(\"devolucion3\", fecha(22));",
+          "pm.collectionVariables.set(\"recogidaPenal\", fecha(1));",
+          "pm.collectionVariables.set(\"devolucionPenal\", fecha(2));",
           "const nac = new Date(); nac.setFullYear(nac.getFullYear() - 16);",
           "pm.collectionVariables.set(\"fechaNacimientoMenor\", nac.toISOString().slice(0, 10));"
         ]
@@ -75,28 +77,24 @@
       "value": ""
     },
     {
-      "key": "contrasenaTemporal",
-      "value": ""
+      "key": "sucursalAutoAndes",
+      "value": "Sucursal Centro Cali"
     },
     {
-      "key": "sucursalAutoAndesId",
-      "value": ""
+      "key": "coberturaAutoAndes",
+      "value": "Seguro todo riesgo"
     },
     {
-      "key": "coberturaAutoAndesId",
-      "value": ""
+      "key": "coberturaRentaCol",
+      "value": "Asistencia en carretera"
     },
     {
-      "key": "coberturaRentaColId",
-      "value": ""
+      "key": "sucursalNorte",
+      "value": "Sucursal Norte"
     },
     {
-      "key": "sucursalNorteId",
-      "value": "suc-rentacol-norte"
-    },
-    {
-      "key": "sucursalSurId",
-      "value": "suc-rentacol-sur"
+      "key": "sucursalSur",
+      "value": "Sucursal Sur"
     },
     {
       "key": "sufijo",
@@ -161,6 +159,22 @@
     {
       "key": "fechaNacimientoMenor",
       "value": ""
+    },
+    {
+      "key": "clienteMenorId",
+      "value": ""
+    },
+    {
+      "key": "codigoReserva4",
+      "value": ""
+    },
+    {
+      "key": "recogidaPenal",
+      "value": ""
+    },
+    {
+      "key": "devolucionPenal",
+      "value": ""
     }
   ],
   "item": [
@@ -204,7 +218,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               }
             ],
             "url": {
@@ -219,13 +233,19 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"correo\": \"admin@valqui.com\",\n  \"contrasena\": \"Admin123*\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "correo",
+                  "value": "admin@valqui.com",
+                  "type": "text"
+                },
+                {
+                  "key": "contrasena",
+                  "value": "Admin123*",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -249,7 +269,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               }
             ],
             "url": {
@@ -264,13 +284,19 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"correo\": \"admin@valqui.com\",\n  \"contrasena\": \"Incorrecta1*\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "correo",
+                  "value": "admin@valqui.com",
+                  "type": "text"
+                },
+                {
+                  "key": "contrasena",
+                  "value": "Incorrecta1*",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         }
@@ -289,8 +315,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
                   "const r = pm.response.json();",
-                  "pm.test(\"Devuelve la contraseña temporal\", () => { pm.expect(r.contrasenaTemporal).to.be.a(\"string\").and.not.empty; pm.expect(r.nit).to.eql(pm.collectionVariables.get(\"nitAutoAndes\")); });",
-                  "pm.collectionVariables.set(\"contrasenaTemporal\", r.contrasenaTemporal);"
+                  "pm.test(\"Registra el NIT y no expone contraseñas\", () => { pm.expect(r.nit).to.eql(pm.collectionVariables.get(\"nitAutoAndes\")); pm.expect(r).to.not.have.property(\"contrasena\"); pm.expect(r).to.not.have.property(\"contrasenaTemporal\"); });"
                 ]
               }
             }
@@ -308,18 +333,24 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/companias",
+              "raw": "{{baseUrl}}/api/companias?correoAcceso={{correoAutoAndes}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "companias"
+              ],
+              "query": [
+                {
+                  "key": "correoAcceso",
+                  "value": "{{correoAutoAndes}}"
+                }
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nit\": \"{{nitAutoAndes}}\",\n  \"nombre\": \"AutoAndes\",\n  \"ciudadesOperacion\": [\n    \"Cali\",\n    \"Bogotá\"\n  ],\n  \"correoAcceso\": \"{{correoAutoAndes}}\",\n  \"nombreCompleto\": \"Carolina Ríos\",\n  \"cargo\": \"Gerente comercial\",\n  \"telefono\": \"3001234567\"\n}",
+              "raw": "{\n  \"nit\": \"{{nitAutoAndes}}\",\n  \"nombre\": \"AutoAndes\",\n  \"ciudadesOperacion\": [\n    \"Cali\",\n    \"Bogotá\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -356,18 +387,24 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/companias",
+              "raw": "{{baseUrl}}/api/companias?correoAcceso=otro{{sufijo}}@valqui.com",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "companias"
+              ],
+              "query": [
+                {
+                  "key": "correoAcceso",
+                  "value": "otro{{sufijo}}@valqui.com"
+                }
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nit\": \"{{nitAutoAndes}}\",\n  \"nombre\": \"AutoAndes Bis\",\n  \"ciudadesOperacion\": [\n    \"Cali\"\n  ],\n  \"correoAcceso\": \"otro{{sufijo}}@valqui.com\",\n  \"nombreCompleto\": \"Otra Persona\",\n  \"cargo\": \"Gerente\",\n  \"telefono\": \"3000000000\"\n}",
+              "raw": "{\n  \"nit\": \"{{nitAutoAndes}}\",\n  \"nombre\": \"AutoAndes Bis\",\n  \"ciudadesOperacion\": [\n    \"Cali\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -397,7 +434,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               }
             ],
             "url": {
@@ -412,13 +449,19 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"correo\": \"{{correoAutoAndes}}\",\n  \"contrasena\": \"{{contrasenaTemporal}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "correo",
+                  "value": "{{correoAutoAndes}}",
+                  "type": "text"
+                },
+                {
+                  "key": "contrasena",
+                  "value": "{{nitAutoAndes}}",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -432,8 +475,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
                   "const r = pm.response.json();",
-                  "pm.test(\"La sucursal tiene id y ciudad Cali\", () => { pm.expect(r.id).to.be.a(\"string\"); pm.expect(r.ciudad).to.eql(\"Cali\"); });",
-                  "pm.collectionVariables.set(\"sucursalAutoAndesId\", r.id);"
+                  "pm.test(\"La sucursal se identifica por nombre y no tiene id\", () => { pm.expect(r.nombre).to.eql(pm.collectionVariables.get(\"sucursalAutoAndes\")); pm.expect(r.ciudad).to.eql(\"Cali\"); pm.expect(r).to.not.have.property(\"id\"); });"
                 ]
               }
             }
@@ -524,6 +566,104 @@
           }
         },
         {
+          "name": "2.5b Sucursal sin dirección (HU-09)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Mensaje: El campo ubicación es obligatorio\", () => pm.expect(pm.response.json().mensaje).to.eql(\"El campo ubicación es obligatorio\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCompania}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companias/{{nitAutoAndes}}/sucursales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companias",
+                "{{nitAutoAndes}}",
+                "sucursales"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sucursal Sin Dirección\",\n  \"ciudad\": \"Cali\",\n  \"horarioAtencion\": \"Lunes a viernes 8:00 - 18:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2.5c Sucursal con nombre repetido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Mensaje: Ya existe una sucursal con ese nombre en la compañía\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Ya existe una sucursal con ese nombre en la compañía\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCompania}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companias/{{nitAutoAndes}}/sucursales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companias",
+                "{{nitAutoAndes}}",
+                "sucursales"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{sucursalAutoAndes}}\",\n  \"ciudad\": \"Cali\",\n  \"direccion\": \"Calle 1 # 2-3\",\n  \"horarioAtencion\": \"Lunes a viernes 8:00 - 18:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
           "name": "2.6 Configurar política",
           "event": [
             {
@@ -543,7 +683,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -563,13 +703,24 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"horasCancelacionGratuita\": 48,\n  \"penalizacionCancelacion\": 80000,\n  \"valorDeposito\": 500000\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "horasGratis",
+                  "value": "48",
+                  "type": "text"
+                },
+                {
+                  "key": "penalizacion",
+                  "value": "80000",
+                  "type": "text"
+                },
+                {
+                  "key": "deposito",
+                  "value": "500000",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -583,8 +734,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
                   "const r = pm.response.json();",
-                  "pm.test(\"La cobertura tiene id y costo\", () => { pm.expect(r.id).to.be.a(\"string\"); pm.expect(r.costo).to.eql(45000); });",
-                  "pm.collectionVariables.set(\"coberturaAutoAndesId\", r.id);"
+                  "pm.test(\"La cobertura se identifica por nombre y no tiene id\", () => { pm.expect(r.nombre).to.eql(pm.collectionVariables.get(\"coberturaAutoAndes\")); pm.expect(r.costo).to.eql(45000); pm.expect(r).to.not.have.property(\"id\"); });"
                 ]
               }
             }
@@ -616,6 +766,55 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Seguro todo riesgo\",\n  \"costo\": 45000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2.7b Cobertura con nombre repetido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Mensaje: Ya existe una cobertura con ese nombre en la compañía\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Ya existe una cobertura con ese nombre en la compañía\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCompania}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companias/{{nitAutoAndes}}/coberturas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companias",
+                "{{nitAutoAndes}}",
+                "coberturas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{coberturaAutoAndes}}\",\n  \"costo\": 10000\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -668,7 +867,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"marca\": \"Toyota\",\n  \"modelo\": \"Corolla\",\n  \"categoria\": \"SEDAN\",\n  \"anio\": 2024,\n  \"transmision\": \"AUTOMATICA\",\n  \"capacidadPasajeros\": 5,\n  \"tarifaDiaria\": 150000,\n  \"kilometrajeIncluido\": 200,\n  \"franquiciaDanos\": 2000000,\n  \"sucursalId\": \"{{sucursalAutoAndesId}}\"\n}",
+              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"marca\": \"Toyota\",\n  \"modelo\": \"Corolla\",\n  \"categoria\": \"SEDAN\",\n  \"anio\": 2024,\n  \"transmision\": \"AUTOMATICA\",\n  \"capacidadPasajeros\": 5,\n  \"tarifaDiaria\": 150000,\n  \"kilometrajeIncluido\": 200,\n  \"franquiciaDanos\": 2000000,\n  \"sucursal\": \"{{sucursalAutoAndes}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -716,7 +915,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"marca\": \"Toyota\",\n  \"modelo\": \"Corolla\",\n  \"categoria\": \"SEDAN\",\n  \"anio\": 2024,\n  \"transmision\": \"AUTOMATICA\",\n  \"capacidadPasajeros\": 5,\n  \"tarifaDiaria\": 150000,\n  \"kilometrajeIncluido\": 200,\n  \"franquiciaDanos\": 2000000,\n  \"sucursalId\": \"{{sucursalAutoAndesId}}\"\n}",
+              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"marca\": \"Toyota\",\n  \"modelo\": \"Corolla\",\n  \"categoria\": \"SEDAN\",\n  \"anio\": 2024,\n  \"transmision\": \"AUTOMATICA\",\n  \"capacidadPasajeros\": 5,\n  \"tarifaDiaria\": 150000,\n  \"kilometrajeIncluido\": 200,\n  \"franquiciaDanos\": 2000000,\n  \"sucursal\": \"{{sucursalAutoAndes}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -744,7 +943,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -764,13 +963,14 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"EN_MANTENIMIENTO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "estado",
+                  "value": "EN_MANTENIMIENTO",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -793,7 +993,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -813,13 +1013,14 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"DISPONIBLE\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "estado",
+                  "value": "DISPONIBLE",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -842,7 +1043,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -862,13 +1063,14 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"RESERVADO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "estado",
+                  "value": "RESERVADO",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -893,7 +1095,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               }
             ],
             "url": {
@@ -908,13 +1110,19 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"correo\": \"rentacol@valqui.com\",\n  \"contrasena\": \"Renta123*\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "correo",
+                  "value": "rentacol@valqui.com",
+                  "type": "text"
+                },
+                {
+                  "key": "contrasena",
+                  "value": "Renta123*",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -928,7 +1136,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
                   "const r = pm.response.json();",
-                  "pm.test(\"Queda DISPONIBLE en Sucursal Norte\", () => { pm.expect(r.estado).to.eql(\"DISPONIBLE\"); pm.expect(r.sucursalId).to.eql(pm.collectionVariables.get(\"sucursalNorteId\")); });"
+                  "pm.test(\"Queda DISPONIBLE en Sucursal Norte\", () => { pm.expect(r.estado).to.eql(\"DISPONIBLE\"); pm.expect(r.sucursal).to.eql(pm.collectionVariables.get(\"sucursalNorte\")); });"
                 ]
               }
             }
@@ -957,7 +1165,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"placa\": \"{{placaRentaCol}}\",\n  \"marca\": \"Mazda\",\n  \"modelo\": \"CX-30\",\n  \"categoria\": \"SUV\",\n  \"anio\": 2024,\n  \"transmision\": \"AUTOMATICA\",\n  \"capacidadPasajeros\": 5,\n  \"tarifaDiaria\": 180000,\n  \"kilometrajeIncluido\": null,\n  \"franquiciaDanos\": 2000000,\n  \"sucursalId\": \"{{sucursalNorteId}}\"\n}",
+              "raw": "{\n  \"placa\": \"{{placaRentaCol}}\",\n  \"marca\": \"Mazda\",\n  \"modelo\": \"CX-30\",\n  \"categoria\": \"SUV\",\n  \"anio\": 2024,\n  \"transmision\": \"AUTOMATICA\",\n  \"capacidadPasajeros\": 5,\n  \"tarifaDiaria\": 180000,\n  \"kilometrajeIncluido\": null,\n  \"franquiciaDanos\": 2000000,\n  \"sucursal\": \"{{sucursalNorte}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -976,8 +1184,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
                   "const r = pm.response.json();",
-                  "pm.test(\"Cobertura creada\", () => pm.expect(r.id).to.be.a(\"string\"));",
-                  "pm.collectionVariables.set(\"coberturaRentaColId\", r.id);"
+                  "pm.test(\"Cobertura creada\", () => pm.expect(r.nombre).to.eql(pm.collectionVariables.get(\"coberturaRentaCol\")));"
                 ]
               }
             }
@@ -1032,6 +1239,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
                   "const r = pm.response.json();",
+                  "pm.test(\"Mensaje: Registro exitoso\", () => pm.expect(r.mensaje).to.eql(\"Registro exitoso\"));",
                   "pm.test(\"Cliente creado sin exponer la contraseña\", () => { pm.expect(r.id).to.be.a(\"string\"); pm.expect(r.tipo).to.eql(\"CLIENTE\"); pm.expect(r).to.not.have.property(\"contrasena\"); });",
                   "pm.collectionVariables.set(\"clienteId\", r.id);"
                 ]
@@ -1078,7 +1286,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
                   "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(409); });",
-                  "pm.test(\"Mensaje: Ya existe un usuario registrado con ese correo\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Ya existe un usuario registrado con ese correo\"));"
+                  "pm.test(\"Mensaje: El correo ya está registrado\", () => pm.expect(pm.response.json().mensaje).to.eql(\"El correo ya está registrado\"));"
                 ]
               }
             }
@@ -1114,6 +1322,50 @@
           }
         },
         {
+          "name": "4.2b Registrar sin fecha de nacimiento (HU-01)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Mensaje: El campo fecha de nacimiento es obligatorio\", () => pm.expect(pm.response.json().mensaje).to.eql(\"El campo fecha de nacimiento es obligatorio\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "clientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Sin Fecha\",\n  \"correo\": \"sinfecha{{sufijo}}@correo.com\",\n  \"contrasena\": \"Cliente123*\",\n  \"numeroContacto\": \"3100000000\",\n  \"paisResidencia\": \"Colombia\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
           "name": "4.3 Login del cliente",
           "event": [
             {
@@ -1134,7 +1386,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               }
             ],
             "url": {
@@ -1149,13 +1401,19 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"correo\": \"{{correoCliente}}\",\n  \"contrasena\": \"Cliente123*\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "correo",
+                  "value": "{{correoCliente}}",
+                  "type": "text"
+                },
+                {
+                  "key": "contrasena",
+                  "value": "Cliente123*",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -1219,7 +1477,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
                   "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(400); });",
-                  "pm.test(\"Mensaje: Marca de tarjeta no aceptada\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Marca de tarjeta no aceptada\"));"
+                  "pm.test(\"Mensaje: Franquicia de tarjeta no soportada\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Franquicia de tarjeta no soportada\"));"
                 ]
               }
             }
@@ -1314,7 +1572,7 @@
                   "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
                   "const r = pm.response.json();",
                   "pm.test(\"Devuelve token, tipo CLIENTE e id\", () => { pm.expect(r.token).to.be.a(\"string\").and.not.empty; pm.expect(r.tipo).to.eql(\"CLIENTE\"); pm.expect(r.id).to.be.a(\"string\"); });",
-                  "pm.collectionVariables.set(\"tokenClienteMenor\", r.token);"
+                  "pm.collectionVariables.set(\"tokenClienteMenor\", r.token); pm.collectionVariables.set(\"clienteMenorId\", r.id);"
                 ]
               }
             }
@@ -1324,7 +1582,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               }
             ],
             "url": {
@@ -1339,13 +1597,19 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"correo\": \"{{correoMenor}}\",\n  \"contrasena\": \"Menor123*\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "correo",
+                  "value": "{{correoMenor}}",
+                  "type": "text"
+                },
+                {
+                  "key": "contrasena",
+                  "value": "Menor123*",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         }
@@ -1523,7 +1787,7 @@
                   "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
                   "const r = pm.response.json();",
                   "pm.test(\"Incluye depósito, franquicia, kilometraje y política\", () => { pm.expect(r.valorDeposito).to.eql(500000); pm.expect(r.franquiciaDanos).to.eql(2000000); pm.expect(r.kilometrajeIncluido).to.eql(200); pm.expect(r.politicaCancelacion.horasCancelacionGratuita).to.eql(48); pm.expect(r.politicaCancelacion.penalizacionCancelacion).to.eql(80000); });",
-                  "pm.test(\"Incluye las coberturas de la compañía\", () => pm.expect(r.coberturas.map(c => c.id)).to.include(pm.collectionVariables.get(\"coberturaAutoAndesId\")));"
+                  "pm.test(\"Incluye las coberturas de la compañía\", () => pm.expect(r.coberturas.map(c => c.nombre)).to.include(pm.collectionVariables.get(\"coberturaAutoAndes\")));"
                 ]
               }
             }
@@ -1597,7 +1861,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"placa\": \"{{placaRentaCol}}\",\n  \"fechaHoraRecogida\": \"{{recogida1}}\",\n  \"fechaHoraDevolucion\": \"{{devolucion1}}\",\n  \"sucursalRecogidaId\": \"{{sucursalNorteId}}\",\n  \"sucursalDevolucionId\": \"{{sucursalNorteId}}\"\n}",
+              "raw": "{\n  \"placa\": \"{{placaRentaCol}}\",\n  \"fechaHoraRecogida\": \"{{recogida1}}\",\n  \"fechaHoraDevolucion\": \"{{devolucion1}}\",\n  \"sucursalRecogida\": \"{{sucursalNorte}}\",\n  \"sucursalDevolucion\": \"{{sucursalNorte}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1647,7 +1911,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"placa\": \"{{placaRentaCol}}\",\n  \"fechaHoraRecogida\": \"{{recogida1}}\",\n  \"fechaHoraDevolucion\": \"{{devolucion1}}\",\n  \"sucursalRecogidaId\": \"{{sucursalNorteId}}\",\n  \"sucursalDevolucionId\": \"{{sucursalNorteId}}\"\n}",
+              "raw": "{\n  \"placa\": \"{{placaRentaCol}}\",\n  \"fechaHoraRecogida\": \"{{recogida1}}\",\n  \"fechaHoraDevolucion\": \"{{devolucion1}}\",\n  \"sucursalRecogida\": \"{{sucursalNorte}}\",\n  \"sucursalDevolucion\": \"{{sucursalNorte}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1666,7 +1930,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
                   "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(409); });",
-                  "pm.test(\"Mensaje: El vehículo no está disponible en esas fechas\", () => pm.expect(pm.response.json().mensaje).to.eql(\"El vehículo no está disponible en esas fechas\"));"
+                  "pm.test(\"Mensaje: El vehículo no está disponible en las fechas seleccionadas\", () => pm.expect(pm.response.json().mensaje).to.eql(\"El vehículo no está disponible en las fechas seleccionadas\"));"
                 ]
               }
             }
@@ -1695,7 +1959,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"placa\": \"{{placaRentaCol}}\",\n  \"fechaHoraRecogida\": \"{{recogidaCruce}}\",\n  \"fechaHoraDevolucion\": \"{{devolucionCruce}}\",\n  \"sucursalRecogidaId\": \"{{sucursalNorteId}}\",\n  \"sucursalDevolucionId\": \"{{sucursalSurId}}\"\n}",
+              "raw": "{\n  \"placa\": \"{{placaRentaCol}}\",\n  \"fechaHoraRecogida\": \"{{recogidaCruce}}\",\n  \"fechaHoraDevolucion\": \"{{devolucionCruce}}\",\n  \"sucursalRecogida\": \"{{sucursalNorte}}\",\n  \"sucursalDevolucion\": \"{{sucursalSur}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1714,7 +1978,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
                   "const r = pm.response.json();",
-                  "pm.test(\"La cobertura queda incluida y suma al total\", () => { pm.expect(r.coberturaIds).to.include(pm.collectionVariables.get(\"coberturaRentaColId\")); pm.expect(r.total).to.eql(390000); });"
+                  "pm.test(\"La cobertura queda incluida y suma al total\", () => { pm.expect(r.coberturas).to.include(pm.collectionVariables.get(\"coberturaRentaCol\")); pm.expect(r.total).to.eql(390000); });"
                 ]
               }
             }
@@ -1724,7 +1988,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -1744,13 +2008,14 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"coberturaId\": \"{{coberturaRentaColId}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "cobertura",
+                  "value": "{{coberturaRentaCol}}",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -1774,7 +2039,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -1794,13 +2059,14 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"ultimosDigitos\": \"0000\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "ultimosDigitos",
+                  "value": "0000",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -1824,7 +2090,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -1844,13 +2110,14 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"ultimosDigitos\": \"4242\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "ultimosDigitos",
+                  "value": "4242",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -1874,7 +2141,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -1894,13 +2161,14 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"EN_MANTENIMIENTO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "estado",
+                  "value": "EN_MANTENIMIENTO",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -1924,7 +2192,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -1944,13 +2212,14 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"sucursalId\": \"{{sucursalSurId}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "sucursal",
+                  "value": "{{sucursalSur}}",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -1994,7 +2263,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"fechaHoraRecogida\": \"{{recogida2}}\",\n  \"fechaHoraDevolucion\": \"{{devolucion2}}\",\n  \"sucursalRecogidaId\": \"{{sucursalAutoAndesId}}\",\n  \"sucursalDevolucionId\": \"{{sucursalAutoAndesId}}\"\n}",
+              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"fechaHoraRecogida\": \"{{recogida2}}\",\n  \"fechaHoraDevolucion\": \"{{devolucion2}}\",\n  \"sucursalRecogida\": \"{{sucursalAutoAndes}}\",\n  \"sucursalDevolucion\": \"{{sucursalAutoAndes}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2045,6 +2314,184 @@
           }
         },
         {
+          "name": "6.9c Cancelar una reserva ya cancelada (HU-07)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Mensaje: No es posible cancelar una reserva en estado cancelada\", () => pm.expect(pm.response.json().mensaje).to.eql(\"No es posible cancelar una reserva en estado cancelada\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{codigoReserva2}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{codigoReserva2}}",
+                "cancelar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "6.9d Crear reserva dentro de la ventana de penalización",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"codigoReserva4\", pm.response.json().codigo);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"fechaHoraRecogida\": \"{{recogidaPenal}}\",\n  \"fechaHoraDevolucion\": \"{{devolucionPenal}}\",\n  \"sucursalRecogida\": \"{{sucursalAutoAndes}}\",\n  \"sucursalDevolucion\": \"{{sucursalAutoAndes}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "6.9e Confirmar la reserva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"CONFIRMADA\", () => pm.expect(pm.response.json().estado).to.eql(\"CONFIRMADA\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{codigoReserva4}}/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{codigoReserva4}}",
+                "confirmar"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "ultimosDigitos",
+                  "value": "4242",
+                  "type": "text"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "6.9f Cancelar tarde cobra la penalización (HU-07)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"CANCELADA con la penalización vigente\", () => { pm.expect(r.estado).to.eql(\"CANCELADA\"); pm.expect(r.penalizacion).to.eql(80000); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{codigoReserva4}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{codigoReserva4}}",
+                "cancelar"
+              ]
+            }
+          }
+        },
+        {
           "name": "6.10 Consultar historial",
           "event": [
             {
@@ -2054,7 +2501,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
                   "const r = pm.response.json();",
-                  "pm.test(\"El historial contiene las dos reservas\", () => { const c = r.map(x => x.codigo); pm.expect(c).to.include(pm.collectionVariables.get(\"codigoReserva\")); pm.expect(c).to.include(pm.collectionVariables.get(\"codigoReserva2\")); });"
+                  "pm.test(\"El historial contiene las dos reservas\", () => { const c = r.reservas.map(x => x.codigo); pm.expect(c).to.include(pm.collectionVariables.get(\"codigoReserva\")); pm.expect(c).to.include(pm.collectionVariables.get(\"codigoReserva2\")); });"
                 ]
               }
             }
@@ -2081,6 +2528,48 @@
                 "reservas",
                 "cliente",
                 "{{clienteId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "6.11 Historial vacío (HU-08)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Lista vacía\", () => pm.expect(r.reservas).to.eql([]));",
+                  "pm.test(\"Mensaje: Aún no tienes reservas\", () => pm.expect(r.mensaje).to.eql(\"Aún no tienes reservas\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenClienteMenor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/cliente/{{clienteMenorId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "cliente",
+                "{{clienteMenorId}}"
               ]
             }
           }
@@ -2111,7 +2600,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               }
             ],
             "url": {
@@ -2126,13 +2615,19 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"correo\": \"agente.norte@valqui.com\",\n  \"contrasena\": \"Agente123*\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "correo",
+                  "value": "agente.norte@valqui.com",
+                  "type": "text"
+                },
+                {
+                  "key": "contrasena",
+                  "value": "Agente123*",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -2148,7 +2643,7 @@
                   "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(400); });",
                   "pm.test(\"Mensaje: Documentos no válidos, no se puede iniciar el alquiler\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Documentos no válidos, no se puede iniciar el alquiler\"));",
                   "pm.sendRequest({ url: pm.collectionVariables.get(\"baseUrl\") + \"/api/reservas/cliente/\" + pm.collectionVariables.get(\"clienteId\"), method: \"GET\", header: { Authorization: \"Bearer \" + pm.collectionVariables.get(\"tokenCliente\") } }, (err, res) => {",
-                  "  pm.test(\"La reserva sigue CONFIRMADA\", () => { pm.expect(err).to.be.null; const r = res.json().find(x => x.codigo === pm.collectionVariables.get(\"codigoReserva\")); pm.expect(r.estado).to.eql(\"CONFIRMADA\"); });",
+                  "  pm.test(\"La reserva sigue CONFIRMADA\", () => { pm.expect(err).to.be.null; const r = res.json().reservas.find(x => x.codigo === pm.collectionVariables.get(\"codigoReserva\")); pm.expect(r.estado).to.eql(\"CONFIRMADA\"); });",
                   "});"
                 ]
               }
@@ -2159,7 +2654,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -2179,13 +2674,14 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"documentosValidos\": false\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "documentosValidos",
+                  "value": "false",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -2209,7 +2705,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -2229,13 +2725,54 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"documentosValidos\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "documentosValidos",
+                  "value": "true",
+                  "type": "text"
                 }
+              ]
+            }
+          }
+        },
+        {
+          "name": "7.3b Cancelar una reserva en curso (HU-07)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Mensaje: No es posible cancelar una reserva en estado en curso\", () => pm.expect(pm.response.json().mensaje).to.eql(\"No es posible cancelar una reserva en estado en curso\"));"
+                ]
               }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{codigoReserva}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{codigoReserva}}",
+                "cancelar"
+              ]
             }
           }
         },
@@ -2249,7 +2786,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
                   "const r = pm.response.json();",
-                  "pm.test(\"Reserva FINALIZADA y vehículo DISPONIBLE en la sucursal de devolución\", () => { pm.expect(r.estadoReserva).to.eql(\"FINALIZADA\"); pm.expect(r.estadoVehiculo).to.eql(\"DISPONIBLE\"); pm.expect(r.sucursalVehiculoId).to.eql(pm.collectionVariables.get(\"sucursalNorteId\")); });",
+                  "pm.test(\"Reserva FINALIZADA y vehículo DISPONIBLE \", () => { pm.expect(r.estadoReserva).to.eql(\"FINALIZADA\"); pm.expect(r.estadoVehiculo).to.eql(\"DISPONIBLE\"); });",
                   "pm.test(\"Penalización por daño registrada\", () => { pm.expect(r.penalizacionDano.valor).to.eql(150000); });"
                 ]
               }
@@ -2260,7 +2797,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -2280,13 +2817,19 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"valorDano\": 150000,\n  \"motivoDano\": \"Rayón en la puerta trasera derecha\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "valorDano",
+                  "value": "150000",
+                  "type": "text"
+                },
+                {
+                  "key": "motivoDano",
+                  "value": "Rayón en la puerta trasera derecha",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         },
@@ -2310,7 +2853,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -2330,13 +2873,59 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"valorDano\": 50000,\n  \"motivoDano\": \"Otro daño\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "valorDano",
+                  "value": "50000",
+                  "type": "text"
+                },
+                {
+                  "key": "motivoDano",
+                  "value": "Otro daño",
+                  "type": "text"
                 }
+              ]
+            }
+          }
+        },
+        {
+          "name": "7.6 Cancelar una reserva finalizada (HU-07)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Mensaje: No es posible cancelar una reserva en estado finalizada\", () => pm.expect(pm.response.json().mensaje).to.eql(\"No es posible cancelar una reserva en estado finalizada\"));"
+                ]
               }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{codigoReserva}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{codigoReserva}}",
+                "cancelar"
+              ]
             }
           }
         }
@@ -2434,7 +3023,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"fechaHoraRecogida\": \"{{recogida3}}\",\n  \"fechaHoraDevolucion\": \"{{devolucion3}}\",\n  \"sucursalRecogidaId\": \"{{sucursalAutoAndesId}}\",\n  \"sucursalDevolucionId\": \"{{sucursalAutoAndesId}}\"\n}",
+              "raw": "{\n  \"placa\": \"{{placaAutoAndes}}\",\n  \"fechaHoraRecogida\": \"{{recogida3}}\",\n  \"fechaHoraDevolucion\": \"{{devolucion3}}\",\n  \"sucursalRecogida\": \"{{sucursalAutoAndes}}\",\n  \"sucursalDevolucion\": \"{{sucursalAutoAndes}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2453,7 +3042,7 @@
                 "exec": [
                   "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
                   "pm.test(\"Formato de error { mensaje, codigo }\", () => { const r = pm.response.json(); pm.expect(r).to.have.property(\"mensaje\"); pm.expect(r.codigo).to.eql(409); });",
-                  "pm.test(\"Mensaje: Pago rechazado\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Pago rechazado\"));"
+                  "pm.test(\"Mensaje: No fue posible procesar el pago, intenta con otro método\", () => pm.expect(pm.response.json().mensaje).to.eql(\"No fue posible procesar el pago, intenta con otro método\"));"
                 ]
               }
             }
@@ -2463,7 +3052,7 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               },
               {
                 "key": "Authorization",
@@ -2483,13 +3072,14 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"ultimosDigitos\": \"0002\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "ultimosDigitos",
+                  "value": "0002",
+                  "type": "text"
                 }
-              }
+              ]
             }
           }
         }
@@ -2561,18 +3151,24 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/companias",
+              "raw": "{{baseUrl}}/api/companias?correoAcceso=intrusa@valqui.com",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "companias"
+              ],
+              "query": [
+                {
+                  "key": "correoAcceso",
+                  "value": "intrusa@valqui.com"
+                }
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nit\": \"999999999-9\",\n  \"nombre\": \"Intrusa\",\n  \"ciudadesOperacion\": [\n    \"Cali\"\n  ],\n  \"correoAcceso\": \"intrusa@valqui.com\",\n  \"nombreCompleto\": \"Intruso\",\n  \"cargo\": \"N/A\",\n  \"telefono\": \"3000000000\"\n}",
+              "raw": "{\n  \"nit\": \"999999999-9\",\n  \"nombre\": \"Intrusa\",\n  \"ciudadesOperacion\": [\n    \"Cali\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"

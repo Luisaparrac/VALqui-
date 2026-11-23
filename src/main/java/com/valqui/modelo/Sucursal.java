@@ -1,13 +1,18 @@
 package com.valqui.modelo;
 
-/** Sucursal embebida en la compañía aliada (composición «tiene»). */
+import jakarta.validation.constraints.NotBlank;
+
+/** Sucursal embebida en la compañía aliada (composición «tiene»). Se identifica por su nombre. */
 public class Sucursal {
 
-    private String id;
+    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
+    @NotBlank(message = "El campo ubicación es obligatorio")
     private String ciudad;
+    @NotBlank(message = "El campo ubicación es obligatorio")
     private String direccion;
     private String coordenadas;
+    @NotBlank(message = "El horario de atención es obligatorio")
     private String horarioAtencion;
 
     public Sucursal() {
@@ -21,8 +26,6 @@ public class Sucursal {
         this.horarioAtencion = horarioAtencion;
     }
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
     public String getCiudad() { return ciudad; }

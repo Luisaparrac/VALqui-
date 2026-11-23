@@ -1,11 +1,25 @@
 package com.valqui.modelo;
 
-/** Cobertura embebida en la compañía aliada (composición «ofrece»). */
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+import org.springframework.data.annotation.Transient;
+
+/** Cobertura embebida en la compañía aliada (composición «ofrece»). Se identifica por su nombre. */
 public class Cobertura {
 
-    private String id;
+    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
     private double costo;
+
+    /** Valor recibido en el JSON: un double no distingue "no enviado" de 0. No se guarda. */
+    @Transient
+    @JsonIgnore
+    @NotNull(message = "El costo es obligatorio")
+    @PositiveOrZero(message = "El costo no puede ser negativo")
+    private Double costoRecibido;
 
     public Cobertura() {
     }
@@ -15,8 +29,12 @@ public class Cobertura {
         this.costo = costo;
     }
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    @JsonSetter("costo")
+    private void recibirCosto(Double valor) {
+        this.costoRecibido = valor;
+        this.costo = valor == null ? 0 : valor;
+    }
+
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
     public double getCosto() { return costo; }

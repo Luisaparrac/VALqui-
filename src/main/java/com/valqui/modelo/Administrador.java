@@ -1,7 +1,5 @@
 package com.valqui.modelo;
 
-import com.valqui.negocio.NegocioException;
-
 public class Administrador extends Usuario {
 
     private String codigoAdministrador;

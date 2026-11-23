@@ -19,12 +19,9 @@ public final class Respuestas {
     public record Error(String mensaje, int codigo) {
     }
 
-    public record Mensaje(String mensaje) {
-    }
-
-    public record UsuarioRegistrado(String id, String nombreCompleto, String correo, String tipo) {
-        public static UsuarioRegistrado de(Usuario u) {
-            return new UsuarioRegistrado(u.getId(), u.getNombreCompleto(), u.getCorreo(), u.getTipo());
+    public record UsuarioRegistrado(String id, String nombreCompleto, String correo, String tipo, String mensaje) {
+        public static UsuarioRegistrado de(Usuario u, String mensaje) {
+            return new UsuarioRegistrado(u.getId(), u.getNombreCompleto(), u.getCorreo(), u.getTipo(), mensaje);
         }
     }
 
@@ -35,7 +32,10 @@ public final class Respuestas {
     }
 
     public record CompaniaRegistrada(String nit, String nombre, List<String> ciudadesOperacion,
-                                     String correoAcceso, String contrasenaTemporal, String mensaje) {
+                                     String correoAcceso, String mensaje) {
+    }
+
+    public record Politica(int horasCancelacionGratuita, double penalizacionCancelacion, double valorDeposito) {
     }
 
     public record Busqueda(List<Vehiculo> vehiculos, String mensaje) {
@@ -43,17 +43,20 @@ public final class Respuestas {
 
     public record ReservaDetalle(String codigo, EstadoReserva estado, String clienteId, String placa,
                                  LocalDateTime fechaHoraRecogida, LocalDateTime fechaHoraDevolucion,
-                                 String sucursalRecogidaId, String sucursalDevolucionId,
+                                 String sucursalRecogida, String sucursalDevolucion,
                                  double tarifaDiaria, Integer kilometrajeIncluido, double franquiciaDanos,
-                                 double valorDeposito, List<String> coberturaIds, String metodoPago,
+                                 double valorDeposito, List<String> coberturas, String metodoPago,
                                  PenalizacionDano penalizacionDano, double total) {
         public static ReservaDetalle de(Reserva r) {
             return new ReservaDetalle(r.getCodigo(), r.getEstado(), r.getClienteId(), r.getVehiculoPlaca(),
-                    r.getFechaHoraRecogida(), r.getFechaHoraDevolucion(), r.getSucursalRecogidaId(),
-                    r.getSucursalDevolucionId(), r.getTarifaDiaria(), r.getKilometrajeIncluido(),
-                    r.getFranquiciaDanos(), r.getValorDeposito(), r.getCoberturaIds(), r.getMetodoPago(),
+                    r.getFechaHoraRecogida(), r.getFechaHoraDevolucion(), r.getSucursalRecogida(),
+                    r.getSucursalDevolucion(), r.getTarifaDiaria(), r.getKilometrajeIncluido(),
+                    r.getFranquiciaDanos(), r.getValorDeposito(), r.getCoberturaNombres(), r.getMetodoPago(),
                     r.getPenalizacionDano(), r.calcularTotal());
         }
+    }
+
+    public record Historial(List<ReservaDetalle> reservas, String mensaje) {
     }
 
     public record Cancelacion(String codigo, EstadoReserva estado, double penalizacion) {

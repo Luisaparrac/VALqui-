@@ -1,23 +1,26 @@
 package com.valqui.modelo;
 
-import com.valqui.negocio.NegocioException;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Document(collection = "companias")
+@JsonIgnoreProperties(value = {"valorDeposito", "horasCancelacionGratuita", "penalizacionCancelacion",
+        "sucursales", "coberturas"}, allowGetters = true)
 public class CompaniaAliada {
 
     @Id
-    private String id;
-    @Indexed(unique = true)
+    @NotBlank(message = "El NIT es obligatorio")
     private String nit;
+    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
-    private List<String> ciudadesOperacion = new ArrayList<>();
+    @NotEmpty(message = "Debe indicar al menos una ciudad de operación")
+    private List<@NotBlank String> ciudadesOperacion = new ArrayList<>();
     private double valorDeposito;
     private int horasCancelacionGratuita;
     private double penalizacionCancelacion;
@@ -33,20 +36,19 @@ public class CompaniaAliada {
         if (!operaEn(sucursal.getCiudad())) {
             throw new NegocioException(400, "La compañía no opera en esa ciudad");
         }
-        if (sucursal.getId() == null) {
-            sucursal.setId(UUID.randomUUID().toString());
+        if (sucursales.stream().anyMatch(s -> s.getNombre().equalsIgnoreCase(sucursal.getNombre()))) {
+            throw new NegocioException(409, "Ya existe una sucursal con ese nombre en la compañía");
         }
         sucursales.add(sucursal);
     }
 
     public void agregarCobertura(Cobertura cobertura) {
-        if (cobertura.getId() == null) {
-            cobertura.setId(UUID.randomUUID().toString());
+        if (coberturas.stream().anyMatch(c -> c.getNombre().equalsIgnoreCase(cobertura.getNombre()))) {
+            throw new NegocioException(409, "Ya existe una cobertura con ese nombre en la compañía");
         }
         coberturas.add(cobertura);
     }
 
-    public String getId() { return id; }
     public String getNit() { return nit; }
     public void setNit(String nit) { this.nit = nit; }
     public String getNombre() { return nombre; }

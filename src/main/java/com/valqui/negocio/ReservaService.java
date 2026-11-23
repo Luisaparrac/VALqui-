@@ -5,11 +5,14 @@ import com.valqui.modelo.AgenteSucursal;
 import com.valqui.modelo.Cobertura;
 import com.valqui.modelo.CompaniaAliada;
 import com.valqui.modelo.EstadoReserva;
-import com.valqui.modelo.EstadoVehiculo;
 import com.valqui.modelo.MetodoPago;
+import com.valqui.modelo.NegocioException;
 import com.valqui.modelo.Reserva;
+import com.valqui.modelo.Usuario;
 import com.valqui.modelo.Vehiculo;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -17,6 +20,9 @@ import java.util.List;
 
 @Service
 public class ReservaService {
+
+    /** La firma de iniciarAlquiler no trae este dato: EntregaService lo deja en la petición. */
+    static final String ATRIBUTO_DOCUMENTOS = "documentosValidos";
 
     private static final String CARACTERES_CODIGO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final SecureRandom ALEATORIO = new SecureRandom();
@@ -37,7 +43,7 @@ public class ReservaService {
         this.pagoService = pagoService;
     }
 
-    /** HU-04: crea la reserva en PENDIENTE copiando las condiciones del vehículo y de la compañía. */
+    /** HU-04: guarda la reserva copiando las condiciones del vehículo y de la compañía. */
     public Reserva crearReserva(Reserva reserva) {
         if (!usuarioService.esMayorDeEdad(reserva.getClienteId())) {
             throw new NegocioException(403, "Debes ser mayor de edad para reservar");
@@ -50,32 +56,30 @@ public class ReservaService {
         }
         Vehiculo vehiculo = vehiculoService.consultarVehiculo(reserva.getVehiculoPlaca());
         String nit = vehiculo.getCompaniaNit();
-        companiaService.consultarSucursal(nit, reserva.getSucursalRecogidaId());
-        companiaService.consultarSucursal(nit, reserva.getSucursalDevolucionId());
-        boolean estadoPermiteReserva = vehiculo.getEstado() == EstadoVehiculo.DISPONIBLE
-                || vehiculo.getEstado() == EstadoVehiculo.RESERVADO;
-        if (!estadoPermiteReserva
+        reserva.setSucursalRecogida(companiaService.consultarSucursal(nit, reserva.getSucursalRecogida()).getNombre());
+        reserva.setSucursalDevolucion(companiaService.consultarSucursal(nit, reserva.getSucursalDevolucion()).getNombre());
+        if (!vehiculo.estaDisponible(recogida, devolucion)
                 || reservaRepository.existeReservaActiva(vehiculo.getPlaca(), recogida, devolucion)) {
-            throw new NegocioException(409, "El vehículo no está disponible en esas fechas");
+            throw new NegocioException(409, "El vehículo no está disponible en las fechas seleccionadas");
         }
-        CompaniaAliada compania = companiaService.consultarCompania(nit);
+        CompaniaAliada compania = vehiculo.getCompania();
 
         reserva.setCodigo(generarCodigo());
         reserva.setVehiculoPlaca(vehiculo.getPlaca());
-        reserva.setEstado(EstadoReserva.PENDIENTE);
         reserva.setTarifaDiaria(vehiculo.getTarifaDiaria());
         reserva.setKilometrajeIncluido(vehiculo.getKilometrajeIncluido());
         reserva.setFranquiciaDanos(vehiculo.getFranquiciaDanos());
         reserva.setValorDeposito(compania.getValorDeposito());
-        return reservaRepository.save(reserva);
+        return reservaRepository.insert(reserva);
     }
 
     /** HU-05: solo en PENDIENTE y con una cobertura de la compañía dueña del vehículo. */
     public Reserva agregarCobertura(String codigo, String cobertura) {
-        Reserva reserva = consultarReserva(codigo);
+        Reserva reserva = buscarReserva(codigo);
         String nit = vehiculoService.consultarVehiculo(reserva.getVehiculoPlaca()).getCompaniaNit();
+        String buscada = cobertura == null ? "" : cobertura.trim();
         Cobertura encontrada = companiaService.consultarCoberturas(nit).stream()
-                .filter(c -> c.getId().equals(cobertura))
+                .filter(c -> c.getNombre().equalsIgnoreCase(buscada))
                 .findFirst()
                 .orElseThrow(() -> new NegocioException(400, "La cobertura no pertenece a la compañía del vehículo"));
         reserva.agregarCobertura(encontrada);
@@ -85,7 +89,7 @@ public class ReservaService {
 
     /** HU-06: revisa la mayoría de edad (R16), cobra calcularTotal() y confirma. */
     public Reserva confirmar(String codigo, String ultimosDigitos) {
-        Reserva reserva = consultarReserva(codigo);
+        Reserva reserva = buscarReserva(codigo);
         if (reserva.getEstado() != EstadoReserva.PENDIENTE) {
             throw new NegocioException(409, "Solo se puede confirmar una reserva pendiente");
         }
@@ -94,22 +98,30 @@ public class ReservaService {
         }
         MetodoPago metodoPago = usuarioService.obtenerMetodoPago(reserva.getClienteId(), ultimosDigitos);
         if (!pagoService.cobrar(reserva.getClienteId(), ultimosDigitos, reserva.calcularTotal())) {
-            throw new NegocioException(409, "Pago rechazado");
+            throw new NegocioException(409, "No fue posible procesar el pago, intenta con otro método");
         }
         reserva.confirmar(metodoPago);
         reservaRepository.save(reserva);
         return reserva;
     }
 
-    /** HU-07 / R12: cancela y devuelve la penalización aplicada. */
-    public double cancelar(String codigo) {
-        Reserva reserva = consultarReserva(codigo);
+    /**
+     * HU-07 / R12: aplica la política vigente de la compañía. Si hay penalización, la cobra con el
+     * método de pago de la confirmación; si el cobro falla, la reserva no se cancela.
+     */
+    public Reserva cancelar(String codigo) {
+        Reserva reserva = buscarReserva(codigo);
         String nit = vehiculoService.consultarVehiculo(reserva.getVehiculoPlaca()).getCompaniaNit();
         CompaniaAliada compania = companiaService.consultarCompania(nit);
-        double penalizacion = reserva.cancelar(LocalDateTime.now(), compania.getHorasCancelacionGratuita(),
-                compania.getPenalizacionCancelacion());
+        reserva.setHorasCancelacionGratuita(compania.getHorasCancelacionGratuita());
+        reserva.setPenalizacionCancelacion(compania.getPenalizacionCancelacion());
+        double penalizacion = reserva.cancelar(LocalDateTime.now());
+        if (penalizacion > 0
+                && !pagoService.cobrar(reserva.getClienteId(), reserva.getMetodoPago(), penalizacion)) {
+            throw new NegocioException(409, "No fue posible procesar el pago, intenta con otro método");
+        }
         reservaRepository.save(reserva);
-        return penalizacion;
+        return reserva;
     }
 
     /** HU-08 / R20 */
@@ -117,36 +129,45 @@ public class ReservaService {
         return reservaRepository.findByClienteId(clienteId).stream().map(this::cargarCoberturas).toList();
     }
 
-    /** HU-16: el agente entrega el vehículo y la reserva pasa a EN_CURSO. */
-    public Reserva iniciarAlquiler(String codigo, AgenteSucursal agente, boolean documentosValidos) {
-        Reserva reserva = consultarReserva(codigo);
-        agente.entregarVehiculo(reserva, documentosValidos);
+    /** HU-16: el agente de la sesión entrega el vehículo y la reserva pasa a EN_CURSO. */
+    public Reserva iniciarAlquiler(String codigo) {
+        Reserva reserva = buscarReserva(codigo);
+        boolean documentosValidos = Boolean.TRUE.equals(atributoPeticion(ATRIBUTO_DOCUMENTOS));
+        agenteSesion().entregarVehiculo(reserva, documentosValidos);
         reservaRepository.save(reserva);
         return reserva;
     }
 
-    /** HU-17: el agente recibe el vehículo, registra el daño (si hay) y la reserva pasa a FINALIZADA. */
-    public Reserva finalizarAlquiler(String codigo, AgenteSucursal agente, Double valorDano, String motivoDano) {
-        Reserva reserva = consultarReserva(codigo);
-        agente.recibirVehiculo(reserva, valorDano, motivoDano);
+    /** HU-17: el agente de la sesión recibe el vehículo, registra el daño (si hay) y la reserva pasa a FINALIZADA. */
+    public Reserva finalizarAlquiler(String codigo, double valorDano, String motivoDano) {
+        Reserva reserva = buscarReserva(codigo);
+        agenteSesion().recibirVehiculo(reserva, valorDano, motivoDano);
         reservaRepository.save(reserva);
         return reserva;
     }
 
-    public Reserva consultarReserva(String codigo) {
-        return reservaRepository.findByCodigo(codigo)
+    private Reserva buscarReserva(String codigo) {
+        return reservaRepository.findById(codigo)
                 .map(this::cargarCoberturas)
                 .orElseThrow(() -> new NegocioException(404, "No se encontró la reserva"));
     }
 
     private Reserva cargarCoberturas(Reserva reserva) {
-        if (!reserva.getCoberturaIds().isEmpty()) {
+        if (!reserva.getCoberturaNombres().isEmpty()) {
             String nit = vehiculoService.consultarVehiculo(reserva.getVehiculoPlaca()).getCompaniaNit();
             reserva.setCoberturas(companiaService.consultarCoberturas(nit).stream()
-                    .filter(c -> reserva.getCoberturaIds().contains(c.getId()))
+                    .filter(c -> reserva.getCoberturaNombres().contains(c.getNombre()))
                     .toList());
         }
         return reserva;
+    }
+
+    private AgenteSucursal agenteSesion() {
+        return (AgenteSucursal) atributoPeticion(Usuario.ATRIBUTO_SESION);
+    }
+
+    private static Object atributoPeticion(String nombre) {
+        return RequestContextHolder.currentRequestAttributes().getAttribute(nombre, RequestAttributes.SCOPE_REQUEST);
     }
 
     private String generarCodigo() {
@@ -157,7 +178,7 @@ public class ReservaService {
                 sb.append(CARACTERES_CODIGO.charAt(ALEATORIO.nextInt(CARACTERES_CODIGO.length())));
             }
             codigo = sb.toString();
-        } while (reservaRepository.existsByCodigo(codigo));
+        } while (reservaRepository.existsById(codigo));
         return codigo;
     }
 }

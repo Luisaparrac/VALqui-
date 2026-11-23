@@ -1,12 +1,11 @@
 package com.valqui.modelo;
 
-import com.valqui.negocio.NegocioException;
-
 /** Agente que trabaja en una sucursal de una compañía (relación «trabaja en»). */
 public class AgenteSucursal extends Usuario {
 
     private String codigoEmpleado;
-    private String sucursalId;
+    /** «trabaja en»: nombre de la sucursal dentro de la compañía. */
+    private String sucursal;
     private String companiaNit;
 
     public AgenteSucursal() {
@@ -14,7 +13,7 @@ public class AgenteSucursal extends Usuario {
     }
 
     public void entregarVehiculo(Reserva reserva, boolean documentosValidos) {
-        if (!sucursalId.equals(reserva.getSucursalRecogidaId())) {
+        if (!sucursal.equals(reserva.getSucursalRecogida())) {
             throw new NegocioException(403, "La reserva no se recoge en la sucursal del agente");
         }
         if (reserva.getEstado() != EstadoReserva.CONFIRMADA) {
@@ -26,11 +25,12 @@ public class AgenteSucursal extends Usuario {
         reserva.iniciarAlquiler();
     }
 
-    public void recibirVehiculo(Reserva reserva, Double valorDano, String motivoDano) {
-        if (!sucursalId.equals(reserva.getSucursalDevolucionId())) {
+    /** valorDano = 0 significa que el vehículo vuelve sin daño. */
+    public void recibirVehiculo(Reserva reserva, double valorDano, String motivoDano) {
+        if (!sucursal.equals(reserva.getSucursalDevolucion())) {
             throw new NegocioException(403, "La reserva no se devuelve en la sucursal del agente");
         }
-        if (valorDano != null) {
+        if (valorDano != 0) {
             reserva.registrarPenalizacion(valorDano, motivoDano);
         }
         reserva.finalizarAlquiler();
@@ -38,8 +38,8 @@ public class AgenteSucursal extends Usuario {
 
     public String getCodigoEmpleado() { return codigoEmpleado; }
     public void setCodigoEmpleado(String codigoEmpleado) { this.codigoEmpleado = codigoEmpleado; }
-    public String getSucursalId() { return sucursalId; }
-    public void setSucursalId(String sucursalId) { this.sucursalId = sucursalId; }
+    public String getSucursal() { return sucursal; }
+    public void setSucursal(String sucursal) { this.sucursal = sucursal; }
     public String getCompaniaNit() { return companiaNit; }
     public void setCompaniaNit(String companiaNit) { this.companiaNit = companiaNit; }
 }

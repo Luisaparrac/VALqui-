@@ -1,6 +1,9 @@
 package com.valqui.modelo;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -18,14 +21,22 @@ public abstract class Usuario {
     public static final String AGENTE = "AGENTE";
     public static final String ADMIN = "ADMIN";
 
+    /** Atributo de la petición donde FiltroSesion deja al usuario autenticado. */
+    public static final String ATRIBUTO_SESION = "usuarioSesion";
+
     private static final BCryptPasswordEncoder BCRYPT = new BCryptPasswordEncoder();
 
     @Id
     private String id;
+    @NotBlank(message = "El nombre completo es obligatorio")
     private String nombreCompleto;
     @Indexed(unique = true)
+    @NotBlank(message = "El correo es obligatorio")
+    @Email(message = "El correo no es válido")
     private String correo;
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @NotBlank(message = "La contraseña es obligatoria")
+    @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     private String contrasena;
     private String tipo;
 
@@ -39,16 +50,14 @@ public abstract class Usuario {
                 && BCRYPT.matches(contrasena, this.contrasena);
     }
 
-    /** Guarda la contraseña cifrada con BCrypt. */
-    public void setContrasena(String contrasena) {
-        this.contrasena = BCRYPT.encode(contrasena);
-    }
-
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getNombreCompleto() { return nombreCompleto; }
     public void setNombreCompleto(String nombreCompleto) { this.nombreCompleto = nombreCompleto; }
     public String getCorreo() { return correo; }
     public void setCorreo(String correo) { this.correo = correo; }
+    public String getContrasena() { return contrasena; }
+    /** Recibe el valor tal cual: UsuarioService y CargaInicial lo guardan cifrado con BCrypt. */
+    public void setContrasena(String contrasena) { this.contrasena = contrasena; }
     public String getTipo() { return tipo; }
 }

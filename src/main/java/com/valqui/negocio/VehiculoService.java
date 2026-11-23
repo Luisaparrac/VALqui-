@@ -2,11 +2,14 @@ package com.valqui.negocio;
 
 import com.valqui.datos.ReservaRepository;
 import com.valqui.datos.VehiculoRepository;
-import com.valqui.modelo.CompaniaAliada;
 import com.valqui.modelo.EstadoVehiculo;
+import com.valqui.modelo.NegocioException;
+import com.valqui.modelo.Reserva;
 import com.valqui.modelo.Sucursal;
 import com.valqui.modelo.Vehiculo;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,16 +30,16 @@ public class VehiculoService {
     }
 
     /** HU-10: el vehículo queda DISPONIBLE en una sucursal de su compañía. */
-    public Vehiculo registrarVehiculo(Vehiculo vehiculo, String sucursalId) {
+    public Vehiculo registrarVehiculo(Vehiculo vehiculo) {
         vehiculo.setPlaca(vehiculo.getPlaca().trim().toUpperCase());
         if (vehiculoRepository.findByPlaca(vehiculo.getPlaca()).isPresent()) {
             throw new NegocioException(409, "Ya existe un vehículo registrado con esa placa");
         }
-        Sucursal sucursal = companiaService.consultarSucursal(vehiculo.getCompaniaNit(), sucursalId);
+        Sucursal sucursal = companiaService.consultarSucursal(vehiculo.getCompaniaNit(), vehiculo.getSucursal());
         vehiculo.reasignar(sucursal);
         vehiculo.cambiarEstado(EstadoVehiculo.DISPONIBLE);
         try {
-            return vehiculoRepository.save(vehiculo);
+            return vehiculoRepository.insert(vehiculo);
         } catch (DuplicateKeyException e) {
             throw new NegocioException(409, "Ya existe un vehículo registrado con esa placa");
         }
@@ -57,70 +60,59 @@ public class VehiculoService {
                 .toList();
     }
 
+    /** Devuelve el vehículo con sus reservas activas y su compañía dueña. */
     public Vehiculo consultarVehiculo(String placa) {
-        return vehiculoRepository.findByPlaca(placa == null ? null : placa.trim().toUpperCase())
+        Vehiculo vehiculo = vehiculoRepository.findByPlaca(placa == null ? null : placa.trim().toUpperCase())
                 .map(this::cargarReservasActivas)
                 .orElseThrow(() -> new NegocioException(404, "No se encontró el vehículo"));
-    }
-
-    /** HU-03 / R15 */
-    public DetalleVehiculo consultarDetalle(String placa) {
-        Vehiculo vehiculo = consultarVehiculo(placa);
-        CompaniaAliada compania = companiaService.consultarCompania(vehiculo.getCompaniaNit());
-        return new DetalleVehiculo(vehiculo, compania.getNombre(), compania.getValorDeposito(),
-                vehiculo.getFranquiciaDanos(), vehiculo.getKilometrajeIncluido(),
-                vehiculo.getKilometrajeIncluido() == null,
-                new DetalleVehiculo.PoliticaCancelacion(compania.getHorasCancelacionGratuita(),
-                        compania.getPenalizacionCancelacion()),
-                compania.getCoberturas());
+        vehiculo.setCompania(companiaService.consultarCompania(vehiculo.getCompaniaNit()));
+        return vehiculo;
     }
 
     /** HU-11: solo a una sucursal de la misma compañía y sin reserva activa. */
-    public Vehiculo reasignar(String placa, String sucursalId) {
+    public void reasignar(String placa, String sucursal) {
         Vehiculo vehiculo = consultarVehiculo(placa);
-        Sucursal sucursal = companiaService.consultarSucursal(vehiculo.getCompaniaNit(), sucursalId);
+        Sucursal destino = companiaService.consultarSucursal(vehiculo.getCompaniaNit(), sucursal);
         if (vehiculo.tieneReservaActiva()) {
             throw new NegocioException(409, "No se puede reasignar un vehículo con una reserva activa");
         }
-        vehiculo.reasignar(sucursal);
-        return vehiculoRepository.save(vehiculo);
+        vehiculo.reasignar(destino);
+        vehiculoRepository.save(vehiculo);
     }
 
-    /** HU-14: solo entre DISPONIBLE, EN_MANTENIMIENTO y FUERA_DE_SERVICIO. */
-    public Vehiculo cambiarEstado(String placa, EstadoVehiculo estado) {
+    /**
+     * HU-14 y HU-16. RESERVADO solo lo pide EntregaService (con la reserva ya EN_CURSO);
+     * VehiculoController rechaza que se asigne a mano.
+     */
+    public void cambiarEstado(String placa, EstadoVehiculo estado) {
         if (estado == null) {
             throw new NegocioException(400, "El estado es obligatorio");
         }
-        if (estado == EstadoVehiculo.RESERVADO) {
-            throw new NegocioException(400, "El estado RESERVADO lo asigna el sistema, no se puede asignar manualmente");
-        }
         Vehiculo vehiculo = consultarVehiculo(placa);
-        if (vehiculo.tieneReservaActiva()) {
+        if (estado != EstadoVehiculo.RESERVADO && vehiculo.tieneReservaActiva()) {
             throw new NegocioException(409, "No se puede cambiar el estado de un vehículo con una reserva activa");
         }
         vehiculo.cambiarEstado(estado);
-        return vehiculoRepository.save(vehiculo);
-    }
-
-    /** HU-16: al entregar el vehículo queda RESERVADO (en uso). */
-    public Vehiculo registrarEntrega(String placa) {
-        Vehiculo vehiculo = consultarVehiculo(placa);
-        vehiculo.cambiarEstado(EstadoVehiculo.RESERVADO);
-        return vehiculoRepository.save(vehiculo);
+        vehiculoRepository.save(vehiculo);
     }
 
     /** HU-17: el vehículo vuelve a DISPONIBLE y queda asignado a la sucursal de devolución. */
-    public Vehiculo registrarDevolucion(String placa, String sucursalDevolucion) {
+    public void registrarDevolucion(String placa, String sucursalDevolucion) {
         Vehiculo vehiculo = consultarVehiculo(placa);
         Sucursal sucursal = companiaService.consultarSucursal(vehiculo.getCompaniaNit(), sucursalDevolucion);
         vehiculo.reasignar(sucursal);
         vehiculo.cambiarEstado(EstadoVehiculo.DISPONIBLE);
-        return vehiculoRepository.save(vehiculo);
+        vehiculoRepository.save(vehiculo);
     }
 
     private Vehiculo cargarReservasActivas(Vehiculo vehiculo) {
-        vehiculo.setReservasActivas(reservaRepository.findByVehiculoPlacaAndEstadoIn(
-                vehiculo.getPlaca(), ReservaRepository.ESTADOS_ACTIVOS));
+        Reserva filtro = new Reserva();
+        filtro.setVehiculoPlaca(vehiculo.getPlaca());
+        ExampleMatcher criterio = ExampleMatcher.matching().withIgnorePaths("estado", "tarifaDiaria",
+                "franquiciaDanos", "valorDeposito", "coberturaNombres");
+        vehiculo.setReservasActivas(reservaRepository.findAll(Example.of(filtro, criterio)).stream()
+                .filter(Reserva::estaActiva)
+                .toList());
         return vehiculo;
     }
 }

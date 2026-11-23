@@ -3,10 +3,12 @@ package com.valqui.negocio;
 import com.valqui.datos.CompaniaRepository;
 import com.valqui.modelo.Cobertura;
 import com.valqui.modelo.CompaniaAliada;
+import com.valqui.modelo.NegocioException;
 import com.valqui.modelo.Sucursal;
-import com.valqui.modelo.UsuarioCompania;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import java.util.List;
 
@@ -21,47 +23,48 @@ public class CompaniaService {
         this.usuarioService = usuarioService;
     }
 
-    /** HU-15: registra la compañía y crea su cuenta de acceso. Devuelve la contraseña temporal. */
-    public String registrarCompania(CompaniaAliada compania, String correoAcceso, UsuarioCompania representante) {
+    /** HU-15: registra la compañía y crea su cuenta de acceso. */
+    public CompaniaAliada registrarCompania(CompaniaAliada compania, String correoAcceso) {
         if (companiaRepository.findByNit(compania.getNit()).isPresent()) {
             throw new NegocioException(409, "Ya existe una compañía registrada con ese NIT");
         }
         try {
-            companiaRepository.save(compania);
+            companiaRepository.insert(compania);
         } catch (DuplicateKeyException e) {
             throw new NegocioException(409, "Ya existe una compañía registrada con ese NIT");
         }
         try {
-            return usuarioService.crearCuentaCompania(compania.getNit(), correoAcceso, representante);
+            RequestContextHolder.currentRequestAttributes().setAttribute(
+                    UsuarioService.ATRIBUTO_NOMBRE_COMPANIA, compania.getNombre(), RequestAttributes.SCOPE_REQUEST);
+            usuarioService.crearCuentaCompania(compania.getNit(), correoAcceso);
         } catch (NegocioException e) {
             companiaRepository.delete(compania);
             throw e;
         }
+        return compania;
     }
 
     /** HU-09 */
-    public Sucursal agregarSucursal(String nit, Sucursal sucursal) {
+    public void agregarSucursal(String nit, Sucursal sucursal) {
         CompaniaAliada compania = consultarCompania(nit);
         compania.agregarSucursal(sucursal);
         companiaRepository.save(compania);
-        return sucursal;
     }
 
     /** HU-12 */
-    public CompaniaAliada configurarPolitica(String nit, int horasGratis, double penalizacion, double deposito) {
+    public void configurarPolitica(String nit, int horasGratis, double penalizacion, double deposito) {
         CompaniaAliada compania = consultarCompania(nit);
         compania.setHorasCancelacionGratuita(horasGratis);
         compania.setPenalizacionCancelacion(penalizacion);
         compania.setValorDeposito(deposito);
-        return companiaRepository.save(compania);
+        companiaRepository.save(compania);
     }
 
     /** HU-13 */
-    public Cobertura agregarCobertura(String nit, Cobertura cobertura) {
+    public void agregarCobertura(String nit, Cobertura cobertura) {
         CompaniaAliada compania = consultarCompania(nit);
         compania.agregarCobertura(cobertura);
         companiaRepository.save(compania);
-        return cobertura;
     }
 
     public CompaniaAliada consultarCompania(String nit) {
@@ -70,9 +73,10 @@ public class CompaniaService {
     }
 
     /** Devuelve la sucursal solo si pertenece a la compañía indicada. */
-    public Sucursal consultarSucursal(String nit, String sucursalId) {
+    public Sucursal consultarSucursal(String nit, String nombre) {
+        String buscado = nombre == null ? "" : nombre.trim();
         return consultarCompania(nit).getSucursales().stream()
-                .filter(s -> s.getId().equals(sucursalId))
+                .filter(s -> s.getNombre().equalsIgnoreCase(buscado))
                 .findFirst()
                 .orElseThrow(() -> new NegocioException(400, "La sucursal no pertenece a la compañía"));
     }
