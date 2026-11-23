@@ -77,12 +77,12 @@ public class ReservaController {
         return ResponseEntity.ok(new Respuestas.Historial(reservas, reservas.isEmpty() ? "Aún no tienes reservas" : null));
     }
 
-    /** Sin consultarReserva en el diagrama, el dueño se comprueba con el historial del cliente de la sesión. */
+    /** Una reserva que no está en el historial del cliente de la sesión no existe para él. */
     private void verificarDueno(String codigo) {
         boolean esSuya = reservaService.consultarHistorial(usuarioSesion().getId()).stream()
                 .anyMatch(r -> r.getCodigo().equals(codigo));
         if (!esSuya) {
-            throw new NegocioException(403, "No tienes permiso para realizar esta acción");
+            throw new NegocioException(404, "No se encontró la reserva");
         }
     }
 

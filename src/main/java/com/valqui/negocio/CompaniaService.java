@@ -7,8 +7,6 @@ import com.valqui.modelo.NegocioException;
 import com.valqui.modelo.Sucursal;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 
 import java.util.List;
 
@@ -34,8 +32,6 @@ public class CompaniaService {
             throw new NegocioException(409, "Ya existe una compañía registrada con ese NIT");
         }
         try {
-            RequestContextHolder.currentRequestAttributes().setAttribute(
-                    UsuarioService.ATRIBUTO_NOMBRE_COMPANIA, compania.getNombre(), RequestAttributes.SCOPE_REQUEST);
             usuarioService.crearCuentaCompania(compania.getNit(), correoAcceso);
         } catch (NegocioException e) {
             companiaRepository.delete(compania);

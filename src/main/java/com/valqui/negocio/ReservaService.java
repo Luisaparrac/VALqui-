@@ -8,7 +8,6 @@ import com.valqui.modelo.EstadoReserva;
 import com.valqui.modelo.MetodoPago;
 import com.valqui.modelo.NegocioException;
 import com.valqui.modelo.Reserva;
-import com.valqui.modelo.Usuario;
 import com.valqui.modelo.Vehiculo;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestAttributes;
@@ -20,9 +19,6 @@ import java.util.List;
 
 @Service
 public class ReservaService {
-
-    /** La firma de iniciarAlquiler no trae este dato: EntregaService lo deja en la petición. */
-    static final String ATRIBUTO_DOCUMENTOS = "documentosValidos";
 
     private static final String CARACTERES_CODIGO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final SecureRandom ALEATORIO = new SecureRandom();
@@ -129,11 +125,10 @@ public class ReservaService {
         return reservaRepository.findByClienteId(clienteId).stream().map(this::cargarCoberturas).toList();
     }
 
-    /** HU-16: el agente de la sesión entrega el vehículo y la reserva pasa a EN_CURSO. */
+    /** HU-16: el agente de la sesión entrega el vehículo; EntregaService ya validó los documentos. */
     public Reserva iniciarAlquiler(String codigo) {
         Reserva reserva = buscarReserva(codigo);
-        boolean documentosValidos = Boolean.TRUE.equals(atributoPeticion(ATRIBUTO_DOCUMENTOS));
-        agenteSesion().entregarVehiculo(reserva, documentosValidos);
+        agenteSesion().entregarVehiculo(reserva, true);
         reservaRepository.save(reserva);
         return reserva;
     }
@@ -162,12 +157,10 @@ public class ReservaService {
         return reserva;
     }
 
+    /** El usuario autenticado se toma del contexto de la sesión, como con SecurityContextHolder. */
     private AgenteSucursal agenteSesion() {
-        return (AgenteSucursal) atributoPeticion(Usuario.ATRIBUTO_SESION);
-    }
-
-    private static Object atributoPeticion(String nombre) {
-        return RequestContextHolder.currentRequestAttributes().getAttribute(nombre, RequestAttributes.SCOPE_REQUEST);
+        return (AgenteSucursal) RequestContextHolder.currentRequestAttributes()
+                .getAttribute(UsuarioService.ATRIBUTO_SESION, RequestAttributes.SCOPE_REQUEST);
     }
 
     private String generarCodigo() {

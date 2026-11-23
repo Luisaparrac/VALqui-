@@ -67,7 +67,7 @@ Sucursales semilla de RentaCol: `Sucursal Norte` y `Sucursal Sur`, ambas en Bogo
 
 ## Colección de Postman
 
-`VAlqui.postman_collection.json` (formato v2.1): 9 carpetas y 60 requests, cada uno con `pm.test`. Las fechas se generan en el pre-request de la colección, y los tokens y códigos se guardan solos en variables de colección.
+`VAlqui.postman_collection.json` (formato v2.1): 9 carpetas y 61 requests, cada uno con `pm.test`. Las fechas se generan en el pre-request de la colección, y los tokens y códigos se guardan solos en variables de colección.
 
 - **Postman:** *Import* → elige el archivo → *Run collection* (en orden).
 - **Newman:**
@@ -100,6 +100,8 @@ Controller → Service → Repository, con inyección por constructor. Cada cont
 
 Sesión: `POST /api/auth/login` devuelve un JWT con el id, el correo y el tipo del usuario. Todas las rutas, salvo el login y el registro de clientes, exigen `Authorization: Bearer <token>` (401 si falta o es inválido, 403 si el rol no corresponde). Todos los errores responden `{ "mensaje": "...", "codigo": N }`.
 
+**Usuario autenticado.** `FiltroSesion` valida el token y deja al usuario en el contexto de la sesión, de forma parecida a `SecurityContextHolder`. Es el único dato que negocio lee de ese contexto, y lo hace en un solo método privado de `ReservaService` para obtener al agente. Los demás datos llegan como parámetros.
+
 ## Endpoints
 
 Cómo se envían los datos: **JSON** en el body cuando el diagrama recibe un objeto, **form** (`x-www-form-urlencoded`) cuando recibe valores simples, y **query** en la URL.
@@ -119,9 +121,9 @@ Cómo se envían los datos: **JSON** en el body cuando el diagrama recibe un obj
 | PUT `/api/vehiculos/{placa}/sucursal` | COMPANIA (dueña) | HU-11 | form: `sucursal` (nombre) | 200 · 400 · 403 · 409 |
 | PUT `/api/vehiculos/{placa}/estado` | COMPANIA (dueña) | HU-14 | form: `estado` | 200 · 400 · 403 · 409 |
 | POST `/api/reservas` | CLIENTE | HU-04 | JSON: `placa, fechaHoraRecogida, fechaHoraDevolucion, sucursalRecogida, sucursalDevolucion` (nombres) | 201 · 400 · 403 · 404 · 409 |
-| POST `/api/reservas/{codigo}/coberturas` | CLIENTE dueño | HU-05 | form: `cobertura` (nombre) | 200 · 400 · 403 · 409 |
-| POST `/api/reservas/{codigo}/confirmar` | CLIENTE dueño | HU-06 | form: `ultimosDigitos` | 200 · 400 · 403 · 409 |
-| POST `/api/reservas/{codigo}/cancelar` | CLIENTE dueño | HU-07, R12 | — | 200 · 403 · 409 |
+| POST `/api/reservas/{codigo}/coberturas` | CLIENTE dueño | HU-05 | form: `cobertura` (nombre) | 200 · 400 · 404 · 409 |
+| POST `/api/reservas/{codigo}/confirmar` | CLIENTE dueño | HU-06 | form: `ultimosDigitos` | 200 · 400 · 403 · 404 · 409 |
+| POST `/api/reservas/{codigo}/cancelar` | CLIENTE dueño | HU-07, R12 | — | 200 · 404 · 409 |
 | GET `/api/reservas/cliente/{clienteId}` | CLIENTE (el mismo) | HU-08, R20 | — | 200 · 403 |
 | POST `/api/entregas/{codigo}/entrega` | AGENTE | HU-16 | form: `documentosValidos` | 200 · 400 · 403 · 404 · 409 |
 | POST `/api/entregas/{codigo}/devolucion` | AGENTE | HU-17 | form: `valorDano` (0 o ausente = sin daño), `motivoDano` | 200 · 400 · 403 · 404 · 409 |
@@ -130,10 +132,10 @@ Pasarela simulada: aprueba si el token no está vacío y el monto es mayor que 0
 
 ## Supuestos
 
-- **Cuenta de la compañía (HU-15).** `crearCuentaCompania(nit, correo)` crea el `UsuarioCompania` con contraseña inicial igual al **NIT**, cifrada con BCrypt. `nombreCompleto` es el nombre de la compañía; `cargo` y `telefono` quedan vacíos.
+- **Cuenta de la compañía (HU-15).** `crearCuentaCompania(nit, correo)` crea el `UsuarioCompania` con contraseña inicial igual al **NIT**, cifrada con BCrypt. `nombreCompleto` es el correo de acceso; `cargo` y `telefono` quedan vacíos.
 - **Política de cancelación (HU-07).** La reserva no guarda copia: `ReservaService.cancelar` consulta la política vigente de la compañía y se la entrega a `Reserva` en campos `@Transient`. Si hay penalización, se cobra con el método de pago de la confirmación; si el cobro falla, la reserva no se cancela.
 - **Identidad.** Sucursales y coberturas se identifican por su nombre dentro de la compañía, y los nombres repetidos responden 409.
-- **Datos que las firmas del diagrama no reciben.** `ReservaService.iniciarAlquiler(codigo)` y `finalizarAlquiler` toman al agente de la sesión desde la petición, y `iniciarAlquiler` también toma `documentosValidos`, que deja ahí `EntregaService`. `crearCuentaCompania` toma de la misma forma el nombre de la compañía.
-- **Dueño de la reserva.** `ReservaController` lo comprueba con el historial del cliente, así que un código inexistente o ajeno responde 403.
+- **Documentos de la entrega (HU-16).** `EntregaService.entregar` valida `documentosValidos` antes de consultar la reserva, así que `false` responde 400 aunque la reserva no exista o sea de otra sucursal.
+- **Dueño de la reserva.** `ReservaController` lo comprueba con el historial del cliente, así que un código inexistente o ajeno responde 404 "No se encontró la reserva".
 - **Respuesta de entrega y devolución.** `EntregaService` devuelve `void`, por lo que `ResultadoEntrega` contiene el código, los estados resultantes y el daño recibido.
 - **Estado RESERVADO.** Solo lo asigna la entrega. `VehiculoController.cambiarEstado` rechaza asignarlo a mano.

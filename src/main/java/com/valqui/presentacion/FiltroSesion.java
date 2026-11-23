@@ -25,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 @Component
 public class FiltroSesion extends OncePerRequestFilter {
 
-    public static final String ATRIBUTO_USUARIO = Usuario.ATRIBUTO_SESION;
+    public static final String ATRIBUTO_USUARIO = UsuarioService.ATRIBUTO_SESION;
 
     private final UsuarioService usuarioService;
     private final ObjectMapper objectMapper;

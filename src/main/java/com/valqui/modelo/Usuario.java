@@ -21,9 +21,6 @@ public abstract class Usuario {
     public static final String AGENTE = "AGENTE";
     public static final String ADMIN = "ADMIN";
 
-    /** Atributo de la petición donde FiltroSesion deja al usuario autenticado. */
-    public static final String ATRIBUTO_SESION = "usuarioSesion";
-
     private static final BCryptPasswordEncoder BCRYPT = new BCryptPasswordEncoder();
 
     @Id

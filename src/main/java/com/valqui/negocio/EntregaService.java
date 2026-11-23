@@ -1,10 +1,9 @@
 package com.valqui.negocio;
 
 import com.valqui.modelo.EstadoVehiculo;
+import com.valqui.modelo.NegocioException;
 import com.valqui.modelo.Reserva;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 
 @Service
 public class EntregaService {
@@ -17,10 +16,11 @@ public class EntregaService {
         this.vehiculoService = vehiculoService;
     }
 
-    /** HU-16: la reserva pasa a EN_CURSO y el vehículo a RESERVADO. */
+    /** HU-16: con documentos válidos, la reserva pasa a EN_CURSO y el vehículo a RESERVADO. */
     public void entregar(String codigo, boolean documentosValidos) {
-        RequestContextHolder.currentRequestAttributes().setAttribute(
-                ReservaService.ATRIBUTO_DOCUMENTOS, documentosValidos, RequestAttributes.SCOPE_REQUEST);
+        if (!documentosValidos) {
+            throw new NegocioException(400, "Documentos no válidos, no se puede iniciar el alquiler");
+        }
         Reserva reserva = reservaService.iniciarAlquiler(codigo);
         vehiculoService.cambiarEstado(reserva.getVehiculoPlaca(), EstadoVehiculo.RESERVADO);
     }

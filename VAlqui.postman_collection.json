@@ -2573,6 +2573,46 @@
               ]
             }
           }
+        },
+        {
+          "name": "6.12 Cancelar una reserva que no está en su historial",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Mensaje: No se encontró la reserva\", () => pm.expect(pm.response.json().mensaje).to.eql(\"No se encontró la reserva\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenClienteMenor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas/{{codigoReserva}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{codigoReserva}}",
+                "cancelar"
+              ]
+            }
+          }
         }
       ]
     },

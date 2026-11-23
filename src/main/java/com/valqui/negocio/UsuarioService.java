@@ -14,8 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -26,8 +24,8 @@ import java.util.Date;
 @Service
 public class UsuarioService {
 
-    /** La firma de crearCuentaCompania no trae el nombre: CompaniaService lo deja en la petición. */
-    static final String ATRIBUTO_NOMBRE_COMPANIA = "nombreCompania";
+    /** Atributo del contexto donde FiltroSesion deja al usuario autenticado. */
+    public static final String ATRIBUTO_SESION = "usuarioSesion";
 
     private static final BCryptPasswordEncoder BCRYPT = new BCryptPasswordEncoder();
 
@@ -111,7 +109,7 @@ public class UsuarioService {
 
     /**
      * HU-15: crea la cuenta de acceso de la compañía. La contraseña inicial es el NIT (cifrado con BCrypt),
-     * el nombre es el de la compañía, y cargo y teléfono quedan vacíos.
+     * el nombre completo es el correo, y cargo y teléfono quedan vacíos.
      */
     public UsuarioCompania crearCuentaCompania(String nit, String correo) {
         String correoNormalizado = normalizarCorreo(correo);
@@ -119,8 +117,7 @@ public class UsuarioService {
             throw new NegocioException(409, "Ya existe un usuario registrado con ese correo");
         }
         UsuarioCompania cuenta = new UsuarioCompania();
-        cuenta.setNombreCompleto((String) RequestContextHolder.currentRequestAttributes()
-                .getAttribute(ATRIBUTO_NOMBRE_COMPANIA, RequestAttributes.SCOPE_REQUEST));
+        cuenta.setNombreCompleto(correoNormalizado);
         cuenta.setCargo("");
         cuenta.setTelefono("");
         cuenta.setCompaniaNit(nit);
